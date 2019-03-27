@@ -1,17 +1,11 @@
 
 #include "ultrasound.h"
 
-/** @brief trigger pin numbers */
-#define SENSOR_COUNT 6
-/** @brief trigger pin numbers */
-#define SENSOR_POLLING_PERIOD_MS 100
-
 // PIN NUMBERS
-/** @brief trigger pin numbers */
-static const int GPIO_TRIG_PIN[SENSOR_COUNT] = {16, 18, 20, 22, 24, 26};
-/** @brief echo pin numbers */
-static const int GPIO_ECHO_PIN[SENSOR_COUNT] = {17, 19, 21, 23, 25, 27};
-
+/** @brief  trigger pin numbers */
+static const int GPIO_TRIG_PIN[ULTSND_SENSOR_COUNT] = {16, 18, 20, 22, 24, 26};
+/** @brief  echo pin numbers */
+static const int GPIO_ECHO_PIN[ULTSND_SENSOR_COUNT] = {17, 19, 21, 23, 25, 27};
 
 /* forward prototypes */
 
@@ -21,14 +15,14 @@ void sonarEcho(int gpio, int level, uint32_t tick, void *data);
 /* globals */
 
 /** @brief  the last measured tick difference */
-static volatile uint32_t tickData[SENSOR_COUNT];
+static volatile uint32_t tickData[ULTSND_SENSOR_COUNT];
 
 uint32_t tickToUm(uint32_t ticks) {
-  return ticks * 171;//343;
+  return ticks * (V_SOUND_M_PER_S / 2);
 }
 
 uint32_t cmToTick(uint32_t cm) {
-  return cm * 58;
+  return cm * ((2 * UM_PER_CM) / V_SOUND_M_PER_S);
 }
 
 /** @brief  read the last sonar reading */
@@ -58,23 +52,23 @@ void sonarEcho(int gpio, int level, uint32_t tick, void *data) {
 int sonarPollStart() {
   int status = 0;
   int i;
-  for (i = 0; i < SENSOR_COUNT; i++) {
-    status |= gpioSetTimerFuncEx(i, SENSOR_POLLING_PERIOD_MS, sonarTriggerCallback, (void *)i);
-    gpioSleep(0, 0, SENSOR_POLLING_PERIOD_MS * 166);
+  for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
+    status |= gpioSetTimerFuncEx(i, ULTSND_SAMPLE_PERIOD_MS, sonarTriggerCallback, (void *)i);
+    gpioSleep(0, 0, ULTSND_SAMPLE_PERIOD_MS * USEC_PER_MSEC / ULTSND_SENSOR_COUNT);
   }
-  
+
   if (status != 0) {
     sonarPollStop();
   }
-  
+
   return status;
 }
 
 int sonarPollStop() {
   int status = 0;
   int i;
-  for (i = 0; i < SENSOR_COUNT; i++) {
-    status |= gpioSetTimerFuncEx(i, SENSOR_POLLING_PERIOD_MS, NULL, NULL);
+  for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
+    status |= gpioSetTimerFuncEx(i, ULTSND_SAMPLE_PERIOD_MS, NULL, NULL);
   }
   return status;
 }
@@ -87,7 +81,7 @@ int sonarStart() {
   if (status < 0) return status;
 
   int i;
-  for (i = 0; i < SENSOR_COUNT; i++) {
+  for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
     gpioSetMode(GPIO_TRIG_PIN[i], PI_OUTPUT);
     gpioWrite(GPIO_TRIG_PIN[i], PI_OFF);
     gpioSetMode(GPIO_ECHO_PIN[i], PI_INPUT);
@@ -104,10 +98,10 @@ void sonarStop() {
 
 
 void sonarTest() {
-    
+
   printf("Enter 0-5 to sample, c to poll, x to exit\n");
   sonarStart();
-  
+
   while (1) {
     int status;
     char c = getchar();
@@ -136,12 +130,12 @@ void sonarTest() {
           gpioSleep(0, 0, 500000);
           printf("== Reading %d ==\n", i);
           int j;
-          for (j = 0; j < SENSOR_COUNT; j++) {
+          for (j = 0; j < ULTSND_SENSOR_COUNT; j++) {
             printf("Sensor %d: %d cm\n", j, sonarReadUm(j) / 10000);
           }
         }
         status = sonarPollStop();
-        if (status != 0) printf("sonarPollStop() error\n");     
+        if (status != 0) printf("sonarPollStop() error\n");
       }
       break;
     }
