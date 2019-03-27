@@ -41,7 +41,7 @@
 #define LIDAR_REG_I2C_CONFIG 0x1E
 
 
-int lidarTest() {
+int lidarTest(int reps) {
 
   int gpioInitStatus = -1, status = -1;
   int device = -1;
@@ -61,27 +61,32 @@ int lidarTest() {
       break;
     }
 
-    status = i2cWriteByteData(device, LIDAR_REG_ACQ_COMMAND, 0x1);
-    if (status < 0) {
-      printf("i2cWriteByteData() error %d\n", status);
-      break;
-    }
-
-    do {
-      status = i2cReadByteData(device, LIDAR_REG_STATUS);
+    int i;
+    for (i = 0; i < reps; i++) {
+      status = i2cWriteByteData(device, LIDAR_REG_ACQ_COMMAND, 0x1);
       if (status < 0) {
+        printf("i2cWriteByteData() error %d\n", status);
+        break;
+      }
+
+      do {
+        status = i2cReadByteData(device, LIDAR_REG_STATUS);
+        if (status < 0) {
+          printf("i2cReadByteData() error %d\n", status);
+          break;
+        }
+      } while (status & 1);
+      if (status < 0) break;
+
+      int readVal;
+      readVal = i2cReadWordData(device, LIDAR_REG_FULL_DELAY_HIGH);
+      if (readVal < 0) {
         printf("i2cReadByteData() error %d\n", status);
         break;
       }
-    } while (status & 1);
+      printf("%d cm\n", readVal);
 
-    int readVal;
-    readVal = i2cReadWordData(device, LIDAR_REG_FULL_DELAY_HIGH);
-    if (readVal < 0) {
-      printf("i2cReadByteData() error %d\n", status);
-      break;
     }
-    printf("%d cm\n", readVal);
 
   } while (false);
 
@@ -97,6 +102,6 @@ int lidarTest() {
 }
 
 int main() {
-  lidarTest();
+  lidarTest(50);
   return 0;
 }
