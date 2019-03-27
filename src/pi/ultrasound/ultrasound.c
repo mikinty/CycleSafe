@@ -16,6 +16,8 @@ void sonarEcho(int gpio, int level, uint32_t tick, void *data);
 
 /** @brief  the last measured tick difference */
 static volatile uint32_t tickData[ULTSND_SENSOR_COUNT];
+/** @brief  the starting tick value */
+static volatile uint32_t tickStart[ULTSND_SENSOR_COUNT];
 
 uint32_t tickToUm(uint32_t ticks) {
   return ticks * (V_SOUND_M_PER_S / 2);
@@ -41,11 +43,10 @@ void sonarTriggerCallback(void *data) {
 
 void sonarEcho(int gpio, int level, uint32_t tick, void *data) {
   uint32_t i = (uint32_t) data;
-  static uint32_t startTick;
 
-  if (level == PI_ON) startTick = tick;
+  if (level == PI_ON) tickStart[i] = tick;
   else if (level == PI_OFF) {
-    tickData[i] = tick - startTick;
+    tickData[i] = tick - tickStart[i];
   }
 }
 

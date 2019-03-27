@@ -41,7 +41,7 @@
 #define LIDAR_REG_I2C_CONFIG 0x1E
 
 
-int lidarTest(int reps) {
+int lidarTest(int reps, int delayUs) {
 
   int gpioInitStatus = -1, status = -1;
   int device = -1;
@@ -78,17 +78,20 @@ int lidarTest(int reps) {
       } while (status & 1);
       if (status < 0) break;
 
-      int readVal;
+      int readVal, dist;
       readVal = i2cReadWordData(device, LIDAR_REG_FULL_DELAY_HIGH);
+      dist = __bswap_16(readVal);
       if (readVal < 0) {
         printf("i2cReadByteData() error %d\n", status);
         break;
       }
-      printf("%d cm\n", readVal);
+      printf("%d cm\n", dist);
+      
+      gpioSleep(0, 0, delayUs);
 
     }
 
-  } while (false);
+  } while (0);
 
   if (device >= 0) {
     i2cClose(device);
@@ -102,6 +105,6 @@ int lidarTest(int reps) {
 }
 
 int main() {
-  lidarTest(50);
+  lidarTest(50, 500000);
   return 0;
 }
