@@ -40,6 +40,36 @@
 /** @brief  */
 #define LIDAR_REG_I2C_CONFIG 0x1E
 
+int lidarIdGet(int device) {
+  
+  int readVal;
+  
+  readVal = i2cReadWordData(device, LIDAR_REG_UNIT_ID_HIGH);
+  if (readVal < 0) return readVal;
+  
+  return __bswap_16(readVal);
+  
+}
+
+int lidarSetAddress(int device, uint8_t newAddr, uint16_t unitId) {
+
+  if (newAddr & 0x80) return -1;
+
+  int status = 0;
+  status = i2cWriteWordData(device, LIDAR_REG_I2C_ID_HIGH, __bswap_16(unitId);
+  if (status < 0) return status;
+  
+  status = i2cWriteByteData(device, LIDAR_REG_I2C_SEC_ADDR, newAddr << 1);
+  if (status < 0) return status;
+  
+  i2cClose(device);
+  device = i2cOpen(LIDAR_I2C_BUS, newAddr, 0);
+  if (device < 0) {
+    return device;
+  }
+  
+  return status;
+}
 
 int lidarTest(int reps, int delayUs) {
 
@@ -60,6 +90,9 @@ int lidarTest(int reps, int delayUs) {
       status = device;
       break;
     }
+
+    readVal = lidarGetId(LIDAR_I2C_ADDR_DEFAULT);
+    if (readVal >= 0) printf("LIDAR ID: %d", readVal);
 
     int i;
     for (i = 0; i < reps; i++) {
