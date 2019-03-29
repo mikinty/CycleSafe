@@ -55,7 +55,7 @@ int sonarPollStart() {
   int i;
   for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
     status |= gpioSetTimerFuncEx(i, ULTSND_SAMPLE_PERIOD_MS, sonarTriggerCallback, (void *)i);
-    gpioSleep(0, 0, ULTSND_SAMPLE_PERIOD_MS * USEC_PER_MSEC / ULTSND_SENSOR_COUNT);
+    gpioSleep(PI_TIME_RELATIVE, 0, ULTSND_SAMPLE_PERIOD_MS * USEC_PER_MSEC / ULTSND_SENSOR_COUNT);
   }
 
   if (status != 0) {
@@ -74,12 +74,7 @@ int sonarPollStop() {
   return status;
 }
 
-int sonarStart() {
-
-  int status = 0;
-
-  status = gpioInitialise();
-  if (status < 0) return status;
+void sonarStart() {
 
   int i;
   for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
@@ -89,14 +84,7 @@ int sonarStart() {
     gpioSetAlertFuncEx(GPIO_ECHO_PIN[i], sonarEcho, (void *)i);
   }
 
-  return status;
-
 }
-
-void sonarStop() {
-  gpioTerminate();
-}
-
 
 void sonarTest() {
 
@@ -114,11 +102,10 @@ void sonarTest() {
     case '4':
     case '5':
       sonarTrigger(c - '0');
-      gpioSleep(0, 0, 500000);
+      gpioSleep(PI_TIME_RELATIVE, 0, 500000);
       printf("Sensor %c: %d cm\n", c, sonarReadUm(c - '0') / 10000);
       break;
     case 'x':
-      sonarStop();
       return;
     case 'c':
       status = sonarPollStart();
@@ -128,7 +115,7 @@ void sonarTest() {
       else {
         int i;
         for (i = 0; i < 30; i++) {
-          gpioSleep(0, 0, 500000);
+          gpioSleep(PI_TIME_RELATIVE, 0, 500000);
           printf("== Reading %d ==\n", i);
           int j;
           for (j = 0; j < ULTSND_SENSOR_COUNT; j++) {
@@ -145,6 +132,12 @@ void sonarTest() {
 }
 
 int main() {
+  int status = gpioInitialise();
+  if (status < 0) {
+    printf("gpioInitialise() error %d\n", status);
+    return status;
+  }
   sonarTest();
+  gpioTerminate();
   return 0;
 }

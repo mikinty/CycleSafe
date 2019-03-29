@@ -4,7 +4,6 @@
 
 // Parameters
 
-
 // Fixed values
 
 #define MSEC_PER_SEC 1000
@@ -21,5 +20,8 @@
 #define UM_PER_CM 10000
 
 #define V_SOUND_M_PER_S 343
+
+#define ERRP(...) fprintf(stderr, "%s:%d in %s", __FILE__, __LINE__, __FUNC__);\
+  fprintf(stderr, __VA_ARGS__);
 
 #endif //_CONSTANTS_H_
