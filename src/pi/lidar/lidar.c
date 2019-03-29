@@ -43,7 +43,7 @@
 #define LIDAR_QLEN 16
 #define LIDAR_QLEN_MASK 0xF
 
-typedef struct {
+typedef struct __lidar_dev_t {
   int i2cHandle;
   uint16_t unitId;
 
@@ -52,7 +52,7 @@ typedef struct {
   int32_t vel; // mm/s
   int32_t qVel[LIDAR_QLEN];
   uint32_t qTick[LIDAR_QLEN];
-  uint8_t qIndex = 0;
+  uint8_t qIndex;
 } lidar_dev_t;
 
 int lidarIdGet(lidar_dev_t *dev) {
@@ -77,7 +77,7 @@ int32_t lidarVelGet(lidar_dev_t *dev) {
 uint32_t lidarTimeToImpactGet(lidar_dev_t *dev) {
 
   return dev->dist * MM_PER_CM * MSEC_PER_SEC / dev->vel;
-  
+
 }
 
 int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
@@ -85,7 +85,7 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   if (newAddr & 0x80) return -1;
 
   int status = 0;
-  status = i2cWriteWordData(dev->i2cHandle, LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId);
+  status = i2cWriteWordData(dev->i2cHandle, LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
   if (status < 0) return status;
 
   status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, newAddr << 1);
@@ -156,8 +156,8 @@ int lidarUpdate(lidar_dev_t *dev) {
   int status;
   int readVal;
 
-  uint32_t tick, prevTick, ppTick;
-  uint16_t dist, prevDist, ppDist;
+  uint32_t tick, prevTick; // ppTick;
+  uint16_t dist, prevDist; // ppDist;
   int32_t vel;
   int i = dev->qIndex;
 
@@ -195,6 +195,8 @@ int lidarUpdate(lidar_dev_t *dev) {
   ppDist = dev->qDist[(i - 2) & LIDAR_QLEN_MASK];
   ppTick = dev->qTick[(i - 2) & LIDAR_QLEN_MASK];
   */
+  return 0;
+
 
 }
 
@@ -205,7 +207,7 @@ void lidarClose(lidar_dev_t *dev) {
 
 }
 
-lidar_dev_t *lidarInit() {
+lidar_dev_t *lidarInit(uint16_t id) {
 
   lidar_dev_t *dev = malloc(sizeof(lidar_dev_t));
   if (dev == NULL) {
@@ -219,6 +221,11 @@ lidar_dev_t *lidarInit() {
     free(dev);
     return NULL;
   }
+  dev->unitId = id;
+
+  int i = 0;
+  while (i < LIDAR_QLEN) dev->qDist[i++] = 0;
+  dev->qIndex = 0;
 
   return dev;
 
@@ -227,22 +234,24 @@ lidar_dev_t *lidarInit() {
 int lidarTest(int reps, int delayUs) {
 
   int status;
-  lidar_dev_t dev;
+  lidar_dev_t *dev;
 
-  dev = lidarInit();
+  int readVal;
+
+  dev = lidarInit(0);
   if (dev == NULL) {
-    printf("lidarInit() error %d\n", device);
-    return device;
+    printf("lidarInit() error\n");
+    return -1;
   }
 
-  readVal = lidarGetId(LIDAR_I2C_ADDR_DEFAULT);
-  if (readVal >= 0) printf("LIDAR ID: %d", readVal);
+  readVal = lidarIdGet(dev);
+  if (readVal >= 0) printf("LIDAR ID: %d\n", readVal);
 
   int i;
   for (i = 0; i < reps; i++) {
-    status = lidarAcquire(dev);
+    status = lidarAcquireStart(dev);
     if (status < 0) {
-      printf("lidarAcquire() error %d\n", status);
+      printf("lidarAcquireStart() error %d\n", status);
       break;
     }
 
@@ -258,7 +267,7 @@ int lidarTest(int reps, int delayUs) {
 
   }
 
-  i2cClose(dev);
+  lidarClose(dev);
 
   return 0;
 

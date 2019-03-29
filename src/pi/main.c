@@ -6,8 +6,6 @@
 #include "lidar/lidar.h"
 #include "ultrasound/ultrasound.h"
 
-
-
 int init() {
 
   int status;
@@ -44,15 +42,20 @@ int init() {
 
 }
 
+int close() {
+  sonarStop();
+  jacketDisconnect();
+  gpioTerminate();
+}
+
 int main() {
+
+  init();
 
   while (1) {
 
   }
 
 
-
-
-  if gpioStatus
 
 }

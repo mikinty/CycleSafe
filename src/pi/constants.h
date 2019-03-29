@@ -21,7 +21,9 @@
 
 #define V_SOUND_M_PER_S 343
 
-#define ERRP(...) fprintf(stderr, "%s:%d in %s", __FILE__, __LINE__, __FUNC__);\
+#define LIDAR_HP_ID 13113
+
+#define ERRP(...) fprintf(stderr, "%s:%d in %s", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 
 #endif //_CONSTANTS_H_

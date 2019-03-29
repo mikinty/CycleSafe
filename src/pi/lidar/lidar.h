@@ -4,8 +4,11 @@
 
 #include <byteswap.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <pigpio.h>
+
+#include "../constants.h"
 
 struct __lidar_dev_t;
 typedef struct __lidar_dev_t lidar_dev_t;
@@ -23,6 +26,6 @@ int lidarUpdate(lidar_dev_t *dev);
 
 void lidarClose(lidar_dev_t *dev);
 
-lidar_dev_t *lidarInit();
+lidar_dev_t *lidarInit(uint16_t id);
 
 #endif //_LIDAR_H_

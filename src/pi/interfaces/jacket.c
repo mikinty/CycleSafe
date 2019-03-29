@@ -4,12 +4,18 @@
 uint32_t jacket_state = 0;
 int jacket_fd = -1;
 
+void jacketSet(uint32_t mask) {
+  jacket_state |= mask;
+}
+
+void jacketUnset(uint32_t mask) {
+  jacket_state &= ~mask;
+}
+
 int jacketUpdate() {
 
   int status;
-
   status = write(jacket_fd, &jacket_state, sizeof(uint32_t));
-
   return status;
 
 }
@@ -41,4 +47,47 @@ int jacketConnect() {
 
   return 0;
 
+}
+
+int jacketTest(int sleepSec) {
+
+  int status;
+  status = jacketConnect();
+  if (status < 0) {
+    printf("jacketConnect() failed %d\n", status);
+    return status;
+  }
+
+  int i;
+  for (i = 0; i < 60 / sleepSec; i++) {
+
+    jacketSet(~JKP_MASK_CONTROL);
+    status = jacketUpdate();
+    if (status < 0) {
+      printf("jacketUpdate() failed %d\n", status);
+      jacketDisconnect();
+      return status;
+    }
+
+    sleep(sleepSec);
+
+    jacketUnset(~JKP_MASK_CONTROL);
+    status = jacketUpdate();
+    if (status < 0) {
+      printf("jacketUpdate() failed %d\n", status);
+      jacketDisconnect();
+      return status;
+    }
+
+    sleep(sleepSec);
+
+  }
+
+  jacketDisconnect();
+  return 0;
+
+}
+
+int main() {
+  return jacketTest(3);
 }
