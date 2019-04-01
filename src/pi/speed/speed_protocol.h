@@ -1,0 +1,10 @@
+
+#ifndef _SPEED_PROTOCOL_H_
+#define _SPEED_PROTOCOL_H_
+
+#define SPEED_BAUD_RATE 115200
+#define SPEED_BAUD_RATE_SPEED_T B115200
+
+#define SPEED_REQ_SPEED '0'
+
+#endif //_SPEED_PROTOCOL_H_

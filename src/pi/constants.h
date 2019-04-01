@@ -23,7 +23,10 @@
 
 #define LIDAR_HP_ID 13113
 
-#define ERRP(...) fprintf(stderr, "%s:%d in %s", __FILE__, __LINE__, __FUNCTION__);\
+/** @brief  Top-middle USB port */
+#define SPEED_USB_PORT "/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0"
+
+#define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 
 #endif //_CONSTANTS_H_
