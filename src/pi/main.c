@@ -27,15 +27,9 @@ int init() {
     return status;
   }
 
-  status = sonarStart();
-  if (status < 0) {
-    ERRP("sonarStart() failed.\n");
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
-  }
+  sonarStart();
 
-  frontLidar = lidarStart(LIDAR_HP_ID);
+  frontLidar = lidarInit(LIDAR_HP_ID);
   if (status < 0) {
     ERRP("lidarStart() failed.\n");
     sonarStop();
@@ -54,10 +48,11 @@ int init() {
     return status;
   }
 
+  return 0;
 
 }
 
-int close() {
+void csClose() {
   sonarPollStop();
   lidarClose(frontLidar);
   sonarStop();

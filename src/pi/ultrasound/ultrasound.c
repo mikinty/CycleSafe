@@ -86,6 +86,17 @@ void sonarStart() {
 
 }
 
+void sonarStop() {
+  
+  int i;
+  for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
+    gpioSetMode(GPIO_TRIG_PIN[i], PI_INPUT);
+    gpioSetMode(GPIO_ECHO_PIN[i], PI_INPUT);
+    gpioSetAlertFuncEx(GPIO_ECHO_PIN[i], NULL, NULL);
+  }
+  
+}
+
 void sonarTest() {
 
   printf("Enter 0-5 to sample, c to poll, x to exit\n");
@@ -131,6 +142,7 @@ void sonarTest() {
 
 }
 
+#ifndef FULL_BUILD
 int main() {
   int status = gpioInitialise();
   if (status < 0) {
@@ -141,3 +153,4 @@ int main() {
   gpioTerminate();
   return 0;
 }
+#endif

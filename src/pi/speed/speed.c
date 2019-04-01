@@ -138,6 +138,8 @@ int speedTest() {
 
 }
 
+#ifndef FULL_BUILD
 int main() {
   return speedTest();
 }
+#endif

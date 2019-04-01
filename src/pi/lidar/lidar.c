@@ -273,6 +273,7 @@ int lidarTest(int reps, int delayUs) {
 
 }
 
+#ifndef FULL_BUILD
 int main() {
 
   int status = gpioInitialise();
@@ -288,3 +289,4 @@ int main() {
   return 0;
 
 }
+#endif

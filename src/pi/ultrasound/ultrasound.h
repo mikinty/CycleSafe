@@ -20,7 +20,7 @@ uint32_t sonarReadUm(uint32_t sensor);
 int sonarTrigger(uint32_t sensor);
 int sonarPollStart();
 int sonarPollStop();
-int sonarStart();
+void sonarStart();
 void sonarStop();
 
 #endif //_ULTRASOUND_H_

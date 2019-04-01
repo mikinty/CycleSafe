@@ -88,6 +88,8 @@ int jacketTest(int sleepSec) {
 
 }
 
+#ifndef FULL_BUILD
 int main() {
   return jacketTest(3);
 }
+#endif
