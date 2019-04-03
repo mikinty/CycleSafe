@@ -1,4 +1,3 @@
-
 #ifndef _JACKET_PROTOCOL_H_
 #define _JACKET_PROTOCOL_H_
 
