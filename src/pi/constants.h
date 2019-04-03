@@ -2,10 +2,12 @@
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
+// Debug
+
 // Parameters
 
 #define THRESH_FRONT_TTI_MSEC 3000
-#define THRESH_PROX_UM 1000000
+#define THRESH_PROX_UM 300000
 #define THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 10
 #define ULTSND_MIN_DIST_UM 50000
 #define LIDAR_MIN_DIST_CM 20
@@ -35,5 +37,7 @@
 
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
+#define INFOP(...) fprintf(stdout, "%s", __VA_ARGS__);
+  
 
 #endif //_CONSTANTS_H_

@@ -20,6 +20,7 @@ int init() {
     ERRP("gpioInitialise() failed.\n");
     return status;
   }
+  INFOP("pigpio initialized.\n");
 
   status = jacketConnect();
   if (status < 0) {
@@ -27,6 +28,7 @@ int init() {
     gpioTerminate();
     return status;
   }
+  INFOP("Jacket connected.\n");
 
   status = speedInit();
   if (status < 0) {
@@ -35,6 +37,7 @@ int init() {
     gpioTerminate();
     return status;
   }
+  INFOP("Speedometer initialized.\n");
 
   sonarStart();
 
@@ -47,6 +50,7 @@ int init() {
     gpioTerminate();
     return status;
   }
+  INFOP("LIDAR (front) initialized.\n");
 
   status = sonarPollStart();
   if (status < 0) {
@@ -58,6 +62,12 @@ int init() {
     gpioTerminate();
     return status;
   }
+  INFOP("sonar initialized.\n");
+
+  gpioSetMode(5, PI_INPUT);
+  gpioSetPullUpDown(5, PI_PUD_UP); 
+  gpioSetMode(6, PI_INPUT);
+  gpioSetPullUpDown(6, PI_PUD_UP); 
 
   return 0;
 
@@ -74,13 +84,21 @@ void csClose() {
 
 int main() {
 
-  init();
+  int status;
+  status = init();
+  if (status < 0) {  
+    ERRP("Init failed\n");
+    return -1;
+  }
   int prevSpeed = 0, speed = 0;
+  
   while (1) {
 
     lidarUpdate(frontLidar);
-    if (lidarTimeToImpactGetMs(frontLidar) < THRESH_FRONT_TTI_MSEC) {
+    uint32_t tti = lidarTimeToImpactGetMs(frontLidar);
+    if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
+      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
@@ -96,14 +114,25 @@ int main() {
       }
     }
 
-    if (speed == 0 || speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
+    // TODO put back zero speed
+    if (speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
       jacketSet(JKP_MASK_BRAKE);
     }
     else {
       jacketUnset(JKP_MASK_BRAKE);
     }
     prevSpeed = speed;
-    jacketUpdate();
+    
+    if (!gpioRead(5)) jacketSet(JKP_MASK_TURNSIG_L);
+    else jacketUnset(JKP_MASK_TURNSIG_L);
+    if (!gpioRead(6)) jacketSet(JKP_MASK_TURNSIG_R);
+    else jacketUnset(JKP_MASK_TURNSIG_R);
+    
+    status = jacketUpdate();
+    if (status < 0) {
+      ERRP("Jacket update failed\n");
+    }
+    gpioSleep(0, 0, 10000);
 
   }
 

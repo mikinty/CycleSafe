@@ -76,7 +76,8 @@ int32_t lidarVelGet(lidar_dev_t *dev) {
 
 uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev) {
 
-  return dev->dist * MM_PER_CM * MSEC_PER_SEC / dev->vel;
+  if (dev->vel >= 0) return (uint32_t) -1;
+  return (dev->dist * MM_PER_CM * MSEC_PER_SEC) / -(dev->vel);
 
 }
 
@@ -124,14 +125,14 @@ int lidarDistRead(lidar_dev_t *dev) {
 
 }
 
-void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint16_t tick, int32_t vel) {
+void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick, int32_t vel) {
 
   int i = dev->qIndex;
   dev->qDist[i] = dist;
   dev->qTick[i] = tick;
   dev->qVel[i] = vel;
 
-  i++;
+  dev->qIndex = (i + 1) & LIDAR_QLEN_MASK;
 
   if (dev->qDist[0] == 0) {
     // First reading
@@ -145,7 +146,7 @@ void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint16_t tick, int32_t vel) {
       dev->vel = vel;
     }
     else {
-      dev->vel = (3 * dev->vel + vel) / 4;
+      dev->vel = (7 * dev->vel + vel) / 8;
     }
   }
 
@@ -186,7 +187,10 @@ int lidarUpdate(lidar_dev_t *dev) {
   prevTick = dev->qTick[(i - 1) & LIDAR_QLEN_MASK];
 
   // This is in um/ms, or mm/s
-  vel = (((int32_t) dist) - ((int32_t) prevDist)) * UM_PER_CM * USEC_PER_MSEC / (int32_t) (tick - prevTick);
+  
+  int64_t dx = ((((int64_t) dist) - ((int64_t) prevDist)) * UM_PER_CM * USEC_PER_MSEC);
+  int64_t dt = tick - prevTick;
+  vel = dx / dt;
 
   lidarDistEnq(dev, dist, tick, vel);
 

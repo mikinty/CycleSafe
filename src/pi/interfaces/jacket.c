@@ -14,10 +14,17 @@ void jacketUnset(uint32_t mask) {
 
 int jacketUpdate() {
 
+#ifdef DEBUG_NO_CONNECT
+  static uint32_t prev_jacket_state = 0;
+  if (prev_jacket_state != jacket_state)
+    printf("Send: 0x%x\n", jacket_state);
+  prev_jacket_state = jacket_state;
+  return 0;
+#else
   int status;
   status = write(jacket_fd, &jacket_state, sizeof(uint32_t));
   return status;
-
+#endif
 }
 
 void jacketDisconnect() {
@@ -26,7 +33,9 @@ void jacketDisconnect() {
 }
 
 int jacketConnect() {
-
+#ifdef DEBUG_NO_CONNECT
+  return 0;
+#else
   struct sockaddr_rc addr;
   int status;
 
@@ -46,7 +55,7 @@ int jacketConnect() {
   }
 
   return 0;
-
+#endif
 }
 
 int jacketTest(int sleepSec) {
