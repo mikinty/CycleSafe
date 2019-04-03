@@ -93,6 +93,11 @@ int main() {
   int prevSpeed = 0, speed = 0;
   
   while (1) {
+    
+    status = speedRequest();
+    if (status < 0) {
+      printf("speedRequest() error %d\n", status);
+    }
 
     lidarUpdate(frontLidar);
     uint32_t tti = lidarTimeToImpactGetMs(frontLidar);
@@ -105,17 +110,29 @@ int main() {
     }
 
     jacketUnset(JKP_MASK_PROX_SL);
+    jacketUnset(JKP_MASK_VIB_L);
+    jacketUnset(JKP_MASK_VIB_R);
     int i;
     for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
       uint32_t dist = sonarReadUm(i);
       if (dist > ULTSND_MIN_DIST_UM && dist < THRESH_PROX_UM) {
         jacketSet(JKP_MASK_PROX_SL);
+        jacketSet(JKP_MASK_VIB_L);
+        jacketSet(JKP_MASK_VIB_R);
+        
         break;
       }
     }
 
+    //while (!speedAvailable());
+    speed = speedRead();
+    if (speed < 0) {
+      printf("speedRead() error %d\n", speed);
+      speed = 0;
+    }
+
     // TODO put back zero speed
-    if (speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
+    if (speed == 0 || speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
       jacketSet(JKP_MASK_BRAKE);
     }
     else {
