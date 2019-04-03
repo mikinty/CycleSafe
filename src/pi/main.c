@@ -5,6 +5,7 @@
 #include "interfaces/jacket.h"
 #include "lidar/lidar.h"
 #include "ultrasound/ultrasound.h"
+#include "speed/speed.h"
 
 lidar_dev_t *frontLidar;
 lidar_dev_t *farLidar;
