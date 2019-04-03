@@ -74,7 +74,7 @@ int32_t lidarVelGet(lidar_dev_t *dev) {
   return dev->vel;
 }
 
-uint32_t lidarTimeToImpactGet(lidar_dev_t *dev) {
+uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev) {
 
   return dev->dist * MM_PER_CM * MSEC_PER_SEC / dev->vel;
 
@@ -180,7 +180,7 @@ int lidarUpdate(lidar_dev_t *dev) {
 
   // Try to filter out bad readings.
   // Throw out anything too close or too far (20cm - 25m)
-  if (dist < 20 || dist > 2500) return 1;
+  if (dist < LIDAR_MIN_DIST_CM || dist > LIDAR_MAX_DIST_CM) return 1;
 
   prevDist = dev->qDist[(i - 1) & LIDAR_QLEN_MASK];
   prevTick = dev->qTick[(i - 1) & LIDAR_QLEN_MASK];

@@ -22,7 +22,8 @@ void makePass() {
 
 void setup() {
   pinMode(pin_input, INPUT);
-  attachInterrupt(digitalPinToInterrupt(pin_input), makePass, RISING);  Serial.begin(SPEED_BAUD_RATE);
+  attachInterrupt(digitalPinToInterrupt(pin_input), makePass, RISING);
+  Serial.begin(SPEED_BAUD_RATE);
   for (int i = 0; i < samples; i++) {
     timings[i] = 0;
   }

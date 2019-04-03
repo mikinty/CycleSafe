@@ -20,7 +20,7 @@ uint16_t lidarDistGet(lidar_dev_t *dev);
 int32_t lidarVelGet(lidar_dev_t *dev);
 
 /** @brief  Get time to impact in ms */
-uint32_t lidarTimeToImpactGet(lidar_dev_t *dev);
+uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev);
 
 int lidarUpdate(lidar_dev_t *dev);
 

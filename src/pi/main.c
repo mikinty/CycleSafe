@@ -27,12 +27,21 @@ int init() {
     return status;
   }
 
+  status = speedInit();
+  if (status < 0) {
+    ERRP("speedInit() failed.\n");
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+
   sonarStart();
 
   frontLidar = lidarInit(LIDAR_HP_ID);
   if (status < 0) {
     ERRP("lidarStart() failed.\n");
     sonarStop();
+    speedClose();
     jacketDisconnect();
     gpioTerminate();
     return status;
@@ -43,6 +52,7 @@ int init() {
     ERRP("sonarPollStart() failed.\n");
     lidarClose(frontLidar);
     sonarStop();
+    speedClose();
     jacketDisconnect();
     gpioTerminate();
     return status;
@@ -56,6 +66,7 @@ void csClose() {
   sonarPollStop();
   lidarClose(frontLidar);
   sonarStop();
+  speedClose();
   jacketDisconnect();
   gpioTerminate();
 }
@@ -63,16 +74,34 @@ void csClose() {
 int main() {
 
   init();
-
+  int prevSpeed = 0, speed = 0;
   while (1) {
 
     lidarUpdate(frontLidar);
-    if (lidarTimeToImpactGet(frontLidar) < 3 * MSEC_PER_SEC) {
+    if (lidarTimeToImpactGetMs(frontLidar) < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
     }
+
+    jacketUnset(JKP_MASK_PROX_SL);
+    int i;
+    for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
+      uint32_t dist = sonarReadUm(i);
+      if (dist > ULTSND_MIN_DIST_UM && dist < THRESH_PROX_UM) {
+        jacketSet(JKP_MASK_PROX_SL);
+        break;
+      }
+    }
+
+    if (speed == 0 || speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
+      jacketSet(JKP_MASK_BRAKE);
+    }
+    else {
+      jacketUnset(JKP_MASK_BRAKE);
+    }
+    prevSpeed = speed;
     jacketUpdate();
 
   }

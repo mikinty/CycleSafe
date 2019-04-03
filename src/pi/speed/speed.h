@@ -12,4 +12,9 @@
 #include "../constants.h"
 #include "speed_protocol.h"
 
+int speedRead(); // mm/sec
+int speedRequest();
+int speedInit();
+void speedClose();
+
 #endif //_SPEED_H_
