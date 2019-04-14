@@ -6,5 +6,6 @@
 #define SPEED_BAUD_RATE_SPEED_T B115200
 
 #define SPEED_REQ_SPEED '0'
+#define SPEED_REQ_ACCEL '1'
 
 #endif //_SPEED_PROTOCOL_H_

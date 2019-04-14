@@ -41,9 +41,19 @@ int init() {
 
   sonarStart();
 
-  frontLidar = lidarInit(LIDAR_HP_ID);
-  if (status < 0) {
+  frontLidar = lidarInit(LIDAR_ID_SP);
+  if (frontLidar == NULL) {
     ERRP("lidarStart() failed.\n");
+    sonarStop();
+    speedClose();
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+  status = lidarAddressSet(frontLidar, 0x1A);
+  if (status < 0) {
+    ERRP("lidarAddressSet() failed.\n");
+    lidarClose(frontLidar);
     sonarStop();
     speedClose();
     jacketDisconnect();
@@ -52,9 +62,60 @@ int init() {
   }
   INFOP("LIDAR (front) initialized.\n");
 
+  farLidar = lidarInit(LIDAR_ID_HP);
+  if (farLidar == NULL) {
+    ERRP("lidarStart() failed.\n");
+    lidarClose(frontLidar);
+    sonarStop();
+    speedClose();
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+  status = lidarAddressSet(farLidar, 0x2B);
+  if (status < 0) {
+    ERRP("lidarAddressSet() failed.\n");
+    lidarClose(farLidar);
+    lidarClose(frontLidar);
+    sonarStop();
+    speedClose();
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+  INFOP("LIDAR (far) initialized.\n");
+  
+
+  nearLidar = lidarInit(LIDAR_ID_SPMARK);
+  if (nearLidar == NULL) {
+    ERRP("lidarStart() failed.\n");
+    lidarClose(farLidar);
+    lidarClose(frontLidar);
+    sonarStop();
+    speedClose();
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+  status = lidarAddressSet(nearLidar, 0x3C);
+  if (status < 0) {
+    ERRP("lidarAddressSet() failed.\n");
+    lidarClose(nearLidar);
+    lidarClose(farLidar);
+    lidarClose(frontLidar);
+    sonarStop();
+    speedClose();
+    jacketDisconnect();
+    gpioTerminate();
+    return status;
+  }
+  INFOP("LIDAR (near) initialized.\n");
+
   status = sonarPollStart();
   if (status < 0) {
     ERRP("sonarPollStart() failed.\n");
+    lidarClose(nearLidar);
+    lidarClose(farLidar);
     lidarClose(frontLidar);
     sonarStop();
     speedClose();
@@ -75,6 +136,8 @@ int init() {
 
 void csClose() {
   sonarPollStop();
+  lidarClose(nearLidar);
+  lidarClose(farLidar);
   lidarClose(frontLidar);
   sonarStop();
   speedClose();
@@ -99,14 +162,26 @@ int main() {
       printf("speedRequest() error %d\n", status);
     }
 
+    uint32_t tti;
+
     lidarUpdate(frontLidar);
-    uint32_t tti = lidarTimeToImpactGetMs(frontLidar);
+    tti = lidarTimeToImpactGetMs(frontLidar);
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
       // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
+    }
+    
+    lidarUpdate(farLidar);
+    tti = lidarTimeToImpactGetMs(farLidar);
+    if (tti < THRESH_FRONT_TTI_MSEC) {
+      jacketSet(0x1000);
+      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
+    }
+    else {
+      jacketUnset(0x1000);
     }
 
     jacketUnset(JKP_MASK_PROX_SL);

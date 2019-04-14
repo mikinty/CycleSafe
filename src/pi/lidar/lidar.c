@@ -16,7 +16,13 @@
 /** @brief  */
 #define LIDAR_REG_ACQ_CONFIG_REG 0x04
 /** @brief  */
-#define LIDAR_REG_LEGACY_RESET_EN 0x06
+#define LIDARHP_REG_LEGACY_RESET_EN 0x06
+/** @brief  */
+#define LIDARSP_REG_VELOCITY 0x09
+/** @brief  */
+#define LIDARSP_REG_PEAK_CORR 0x0C
+/** @brief  */
+#define LIDARSP_REG_NOISE_PEAK 0x0D
 /** @brief  */
 #define LIDAR_REG_SIGNAL_STRENGTH 0x0E
 /** @brief  */
@@ -25,6 +31,10 @@
 #define LIDAR_REG_FULL_DELAY_LOW 0x10
 /** @brief  */
 #define LIDAR_REG_REF_COUNT_VAL 0x12
+/** @brief  */
+#define LIDARSP_REG_LAST_DELAY_HIGH 0x14
+/** @brief  */
+#define LIDARSP_REG_LAST_DELAY_LOW 0x15
 /** @brief  */
 #define LIDAR_REG_UNIT_ID_HIGH 0x16
 /** @brief  */
@@ -39,6 +49,11 @@
 #define LIDAR_REG_THRESHOLD_BYPASS 0x1C
 /** @brief  */
 #define LIDAR_REG_I2C_CONFIG 0x1E
+
+#define LIDARSP_I2C_REG_BLOCK_MASK 0x80
+
+#define LIDARSP_MASK_ACQ_CONFIG_REG_ACQ 0x4
+#define LIDARSP_MASK_ACQ_CONFIG_REG_ACQ_NOBIAS 0x3
 
 #define LIDAR_QLEN 16
 #define LIDAR_QLEN_MASK 0xF
@@ -59,7 +74,7 @@ int lidarIdGet(lidar_dev_t *dev) {
 
   int readVal;
 
-  readVal = i2cReadWordData(dev->i2cHandle, LIDAR_REG_UNIT_ID_HIGH);
+  readVal = i2cReadWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_UNIT_ID_HIGH);
   if (readVal < 0) return readVal;
 
   return __bswap_16(readVal);
@@ -86,8 +101,12 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   if (newAddr & 0x80) return -1;
 
   int status = 0;
-  status = i2cWriteWordData(dev->i2cHandle, LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
+  // status = i2cWriteWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_ID_HIGH, (dev->unitId >> 8) & 0xFF);
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_ID_LOW, dev->unitId & 0xFF);
   if (status < 0) return status;
+
+  printf("Addr: %d\n", newAddr);
 
   status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, newAddr << 1);
   if (status < 0) return status;
@@ -104,8 +123,13 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   return 0;
 }
 
-int lidarAcquireStart(lidar_dev_t *dev) {
-  return i2cWriteByteData(dev->i2cHandle, LIDAR_REG_ACQ_COMMAND, 0x1);
+int lidarAcquireStart(lidar_dev_t *dev, int noBiasFlag) {
+  if (noBiasFlag) {
+    return i2cWriteByteData(dev->i2cHandle, LIDAR_REG_ACQ_COMMAND, LIDARSP_MASK_ACQ_CONFIG_REG_ACQ_NOBIAS);
+  }
+  else {
+    return i2cWriteByteData(dev->i2cHandle, LIDAR_REG_ACQ_COMMAND, LIDARSP_MASK_ACQ_CONFIG_REG_ACQ);
+  }
 }
 
 int lidarDistRead(lidar_dev_t *dev) {
@@ -118,7 +142,7 @@ int lidarDistRead(lidar_dev_t *dev) {
   } while (status & 1);
 
   int readVal;
-  readVal = i2cReadWordData(dev->i2cHandle, LIDAR_REG_FULL_DELAY_HIGH);
+  readVal = i2cReadWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_FULL_DELAY_HIGH);
   if (readVal < 0) return readVal;
 
   return __bswap_16(readVal);
@@ -253,7 +277,7 @@ int lidarTest(int reps, int delayUs) {
 
   int i;
   for (i = 0; i < reps; i++) {
-    status = lidarAcquireStart(dev);
+    status = lidarAcquireStart(dev, 0);
     if (status < 0) {
       printf("lidarAcquireStart() error %d\n", status);
       break;

@@ -22,6 +22,8 @@ int32_t lidarVelGet(lidar_dev_t *dev);
 /** @brief  Get time to impact in ms */
 uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev);
 
+int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr);
+
 int lidarUpdate(lidar_dev_t *dev);
 
 void lidarClose(lidar_dev_t *dev);

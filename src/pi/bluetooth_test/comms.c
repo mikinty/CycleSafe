@@ -36,8 +36,10 @@ int main(int argc, char **argv)
     // read data from the client
     while (1) {
         bytes_read = read(client, buf, sizeof(buf));
-        if(bytes_read > 0) {
-            printf("received [%s]\n", buf);
+        int i = 0;
+        while(i < bytes_read) {
+            printf("received [%d]\n", buf[i]);
+            i++;
         }
     }
 

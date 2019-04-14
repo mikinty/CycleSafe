@@ -30,7 +30,9 @@
 
 #define V_SOUND_M_PER_S 343
 
-#define LIDAR_HP_ID 13113
+#define LIDAR_ID_HP 13113
+#define LIDAR_ID_SPMARK 25736
+#define LIDAR_ID_SP 10384
 
 /** @brief  Top-middle USB port */
 #define SPEED_USB_PORT "/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0"
