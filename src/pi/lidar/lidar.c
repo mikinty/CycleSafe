@@ -301,6 +301,47 @@ int lidarTest(int reps, int delayUs) {
 
 }
 
+int lidarTestAddrSet(int devID) {
+
+  int status;
+  lidar_dev_t *dev;
+
+  int readVal;
+
+  dev = lidarInit(devID);
+  if (dev == NULL) {
+    printf("lidarInit() error\n");
+    return -1;
+  }
+
+  readVal = lidarIdGet(dev);
+  if (readVal != devID) {
+    printf("Incorrect LIDAR ID: Got %d\n", readVal);
+    return -1;
+  }
+
+  status = lidarAddrSet(dev, 0x49);
+  if (status < 0) {
+    printf("lidarAddrSet() error\n");
+    return -1;
+  }
+  
+  printf("Address changed.\n")
+  
+  readVal = lidarIdGet(dev);
+  if (readVal != devID) {
+    printf("Incorrect LIDAR ID: Got %d\n", readVal);
+    return -1;
+  }
+    
+  lidarClose(dev);
+
+  return 0;
+
+}
+
+
+
 #ifndef FULL_BUILD
 int main() {
 
@@ -310,11 +351,15 @@ int main() {
     return status;
   }
 
-  lidarTest(50, 500000);
+#ifdef TEST_ADDR
+  status = lidarTestAddrSet(LIDAR_ID_HP);
+#else
+  status = lidarTest(50, 500000);
+#endif
 
   gpioTerminate();
 
-  return 0;
+  return status;
 
 }
 #endif
