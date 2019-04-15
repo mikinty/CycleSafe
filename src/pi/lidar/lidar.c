@@ -98,17 +98,19 @@ uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev) {
 
 int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
 
-  if (newAddr & 0x80) return -1;
+  if (newAddr & 0x1) return -1;
 
   int status = 0;
-  // status = i2cWriteWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_ID_HIGH, (dev->unitId >> 8) & 0xFF);
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_ID_LOW, dev->unitId & 0xFF);
+  status = i2cWriteWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
+  
   if (status < 0) return status;
 
-  printf("Addr: %d\n", newAddr);
+  printf("Addr set: 0x%x\n", newAddr);
 
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, newAddr << 1);
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, newAddr);
+  if (status < 0) return status;
+  
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_CONFIG, 0x0);
   if (status < 0) return status;
 
   i2cClose(dev->i2cHandle);
@@ -118,7 +120,6 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   if (device < 0) {
     return device;
   }
-  dev->i2cHandle = device;
 
   return 0;
 }
@@ -320,13 +321,13 @@ int lidarTestAddrSet(int devID) {
     return -1;
   }
 
-  status = lidarAddrSet(dev, 0x49);
+  status = lidarAddressSet(dev, 0x7E);
   if (status < 0) {
     printf("lidarAddrSet() error\n");
     return -1;
   }
   
-  printf("Address changed.\n")
+  printf("Address changed.\n");
   
   readVal = lidarIdGet(dev);
   if (readVal != devID) {
@@ -352,7 +353,8 @@ int main() {
   }
 
 #ifdef TEST_ADDR
-  status = lidarTestAddrSet(LIDAR_ID_HP);
+  status = lidarTestAddrSet(LIDAR_ID_SP);
+  if (status == 0) printf("Success!\n");
 #else
   status = lidarTest(50, 500000);
 #endif

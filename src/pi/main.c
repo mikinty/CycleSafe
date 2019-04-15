@@ -50,7 +50,7 @@ int init() {
     gpioTerminate();
     return status;
   }
-  status = lidarAddressSet(frontLidar, 0x1A);
+  status = lidarAddressSet(frontLidar, 0x6A);
   if (status < 0) {
     ERRP("lidarAddressSet() failed.\n");
     lidarClose(frontLidar);
@@ -61,7 +61,7 @@ int init() {
     return status;
   }
   INFOP("LIDAR (front) initialized.\n");
-
+/*
   farLidar = lidarInit(LIDAR_ID_HP);
   if (farLidar == NULL) {
     ERRP("lidarStart() failed.\n");
@@ -72,7 +72,7 @@ int init() {
     gpioTerminate();
     return status;
   }
-  status = lidarAddressSet(farLidar, 0x2B);
+  status = lidarAddressSet(farLidar, 0x6C);
   if (status < 0) {
     ERRP("lidarAddressSet() failed.\n");
     lidarClose(farLidar);
@@ -84,8 +84,7 @@ int init() {
     return status;
   }
   INFOP("LIDAR (far) initialized.\n");
-  
-
+*/
   nearLidar = lidarInit(LIDAR_ID_SPMARK);
   if (nearLidar == NULL) {
     ERRP("lidarStart() failed.\n");
@@ -97,7 +96,7 @@ int init() {
     gpioTerminate();
     return status;
   }
-  status = lidarAddressSet(nearLidar, 0x3C);
+  status = lidarAddressSet(nearLidar, 0x6E);
   if (status < 0) {
     ERRP("lidarAddressSet() failed.\n");
     lidarClose(nearLidar);
@@ -174,8 +173,8 @@ int main() {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
     }
     
-    lidarUpdate(farLidar);
-    tti = lidarTimeToImpactGetMs(farLidar);
+    lidarUpdate(nearLidar);
+    tti = lidarTimeToImpactGetMs(nearLidar);
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(0x1000);
       // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
