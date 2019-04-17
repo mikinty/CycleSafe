@@ -6,7 +6,6 @@ const int pin_input = 2;
 const int samples = 16;
 const int pos_diff = 4;
 
-
 const int pina_5v = A5;
 const int pina_accel = A4;
 const int pina_gnd = A1;

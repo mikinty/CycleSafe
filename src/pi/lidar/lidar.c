@@ -55,6 +55,9 @@
 #define LIDARSP_MASK_ACQ_CONFIG_REG_ACQ 0x4
 #define LIDARSP_MASK_ACQ_CONFIG_REG_ACQ_NOBIAS 0x3
 
+#define LIDARHP_MASK_I2C_CONFIG_CHANGE_ADDR (0x1 << 4)
+#define LIDAR_MASK_I2C_CONFIG_DISABLE_DEFAULT (0x1 << 3)
+
 #define LIDAR_QLEN 16
 #define LIDAR_QLEN_MASK 0xF
 
@@ -108,23 +111,44 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_I2C_ID_HIGH;
   status = i2cWriteWordData(dev->i2cHandle, reg, __bswap_16(dev->unitId));
-  
-  if (status < 0) return status;
+  if (status < 0) {
+    ERRP("i2cWriteWordData() failed 0x%x.\n", status);
+    return status;
+  }
 
   printf("Addr set: 0x%x\n", newAddr);
 
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, newAddr);
-  if (status < 0) return status;
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, dev->is_hp ? (newAddr << 1) : newAddr);
+  if (status < 0) {
+    ERRP("i2cWriteByteData() failed 0x%x.\n", status);
+    return status;
+  }
   
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_CONFIG, 0x0);
-  if (status < 0) return status;
+  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_CONFIG, dev->is_hp ? LIDARHP_MASK_I2C_CONFIG_CHANGE_ADDR : 0x0);
+  if (status < 0) {
+    ERRP("i2cWriteByteData() failed 0x%x.\n", status);
+    return status;
+  }
 
   i2cClose(dev->i2cHandle);
 
   int device;
   device = i2cOpen(LIDAR_I2C_BUS, newAddr, 0);
   if (device < 0) {
+    ERRP("i2cOpen() failed 0x%x.\n", status);
     return device;
+  }
+  
+  dev->i2cHandle = device;
+  
+  status = i2cWriteByteData(
+    dev->i2cHandle,
+    LIDAR_REG_I2C_CONFIG, 
+    (dev->is_hp ? LIDARHP_MASK_I2C_CONFIG_CHANGE_ADDR : 0x0) | LIDAR_MASK_I2C_CONFIG_DISABLE_DEFAULT
+  );
+  if (status < 0) {
+    ERRP("i2cWriteByteData() failed 0x%x.\n", status);
+    return status;
   }
 
   return 0;
@@ -224,21 +248,30 @@ int lidarUpdate(lidar_dev_t *dev) {
 
   status = lidarAcquireStart(dev, 0);
   if (status < 0) {
+    ERRP("lidarAcquireStart() failed 0x%x.\n", status);
     return status;
   }
 
   do {
     status = i2cReadByteData(dev->i2cHandle, LIDAR_REG_STATUS);
-    if (status < 0) return status;
+    if (status < 0) {
+      ERRP("i2cReadByteData() failed 0x%x.\n", status);
+      return status;
+    }
   } while (status & 1);
 
   tick = gpioTick();
 
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_FULL_DELAY_HIGH;
   readVal = i2cReadWordData(dev->i2cHandle, reg);
-  if (readVal < 0) return readVal;
-
+    
+  if (readVal < 0) {
+    ERRP("i2cReadWordData() failed 0x%x.\n", status);
+    return readVal;
+  }
+  
   dist = __bswap_16(readVal);
+  //printf("%d\n", dist);
 
   // Try to filter out bad readings.
   // Throw out anything too close or too far (20cm - 25m)
@@ -293,14 +326,14 @@ lidar_dev_t *lidarInit(uint16_t id) {
 
 }
 
-int lidarTest(int reps, int delayUs) {
+int lidarTest(int reps, int delayUs, uint16_t id) {
 
   int status;
   lidar_dev_t *dev;
 
   int readVal;
 
-  dev = lidarInit(0);
+  dev = lidarInit(id);
   if (dev == NULL) {
     printf("lidarInit() error\n");
     return -1;
@@ -354,7 +387,7 @@ int lidarTestAddrSet(int devID) {
     return -1;
   }
 
-  status = lidarAddressSet(dev, 0x7E);
+  status = lidarAddressSet(dev, 0x42);
   if (status < 0) {
     printf("lidarAddrSet() error\n");
     return -1;
@@ -385,11 +418,19 @@ int main() {
     return status;
   }
 
+  uint16_t id;
+
+#ifdef TEST_HP
+  id = LIDAR_ID_HP;
+#else
+  id = LIDAR_ID_SP;
+#endif
+
 #ifdef TEST_ADDR
-  status = lidarTestAddrSet(LIDAR_ID_SP);
+  status = lidarTestAddrSet(id);
   if (status == 0) printf("Success!\n");
 #else
-  status = lidarTest(50, 500000);
+  status = lidarTest(50, 500000, id);
 #endif
 
   gpioTerminate();

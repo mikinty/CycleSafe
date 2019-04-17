@@ -152,19 +152,22 @@ int main() {
     ERRP("Init failed\n");
     return -1;
   }
-  int prevSpeed = 0, speed = 0;
+  int speed = 0;
   int accel = 0;
 
   while (1) {
 
     status = speedRequest(SPEED_REQ_SPEED);
     if (status < 0) {
-      printf("speedRequest() error %d\n", status);
+      ERRP("speedRequest() error 0x%x\n", status);
     }
 
     uint32_t tti;
 
-    lidarUpdate(frontLidar);
+    status = lidarUpdate(frontLidar);
+    if (status < 0) {
+      ERRP("lidarUpdate(frontLidar) error 0x%x\n", status);
+    }
     tti = lidarTimeToImpactGetMs(frontLidar);
     // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
     if (tti < THRESH_FRONT_TTI_MSEC) {
@@ -175,6 +178,9 @@ int main() {
     }
 
     lidarUpdate(nearLidar);
+    if (status < 0) {
+      ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
+    }
     tti = lidarTimeToImpactGetMs(nearLidar);
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(0x1000);
@@ -202,18 +208,20 @@ int main() {
     //while (!speedAvailable());
     speed = speedRead();
     if (speed < 0) {
-      printf("speedRead() error %d\n", speed);
+      ERRP("speedRead() error 0x%x\n", speed);
       speed = 0;
     }
     status = speedRequest(SPEED_REQ_ACCEL);
     if (status < 0) {
-      printf("speedRequest() error %d\n", status);
+      ERRP("speedRequest() error 0x%x\n", status);
     }
     accel = speedRead();
     if (accel < 0) {
-      printf("speedRead() error %d\n", speed);
+      ERRP("speedRead() error 0x%x\n", accel);
       accel = 0;
     }
+    
+    //printf("Speed: %d, Accel: %d\n", speed, accel);
 
     // TODO put back zero speed
     if (speed < THRESH_BRAKE_SPEED_MM_PER_SEC || accel > THRESH_BRAKE_DECCELERATION_RAW) {
@@ -222,7 +230,6 @@ int main() {
     else {
       jacketUnset(JKP_MASK_BRAKE);
     }
-    prevSpeed = speed;
 
     if (!gpioRead(5)) jacketSet(JKP_MASK_TURNSIG_L);
     else jacketUnset(JKP_MASK_TURNSIG_L);

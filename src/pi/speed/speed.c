@@ -92,11 +92,22 @@ int speedInit() {
   }
 
   // Try to read the magic chars
+  
+  char tmp;
   do {
     int cnt;
-    char tmp;
-    cnt = ioctl(speed_fd, FIONREAD, &result);
+    status = ioctl(speed_fd, FIONREAD, &cnt);
+    
+    if (status < 0) {
+      ERRP("ioctl() failed %d.\n", errno);
+      return status;
+    }
     status = read(speed_fd, &tmp, sizeof(char));
+    
+    if (status < 0) {
+      ERRP("read() failed %d.\n", errno);
+      return status;
+    }
     if (tmp == SPEED_REQ_INIT_MAGIC) {
       break;
     }
@@ -108,12 +119,12 @@ int speedInit() {
     ERRP("write() failed %d.\n", errno);
     return -1;
   }
-
-  status = tcflush(speed_fd, TCIFLUSH);
-  if (status < 0) {
-    ERRP("tcflush() failed %d.\n", errno);
-    return status;
-  }
+  
+  // Clear the queue
+  do {
+    char tmpbuf[16];
+    status = read(speed_fd, tmpbuf, 16);
+  } while (status > 0);
 
   return 0;
 
