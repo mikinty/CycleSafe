@@ -2,15 +2,23 @@
 #include "speed_protocol.h"
 
 const int pin_input = 2;
+
 const int samples = 16;
 const int pos_diff = 4;
+
+
+const int pina_5v = A5;
+const int pina_accel = A4;
+const int pina_gnd = A1;
 
 // TODO make this customizable
 long wheel_circumference_um_by_4 = 7816000; //um
 
+int init_ready;
+
 int pos = samples - 1;
 int timings[samples];
-long bike_speed = 0; 
+long bike_speed = 0;
 
 void makePass() {
   int curr_time = millis();
@@ -27,8 +35,17 @@ void setup() {
   for (int i = 0; i < samples; i++) {
     timings[i] = 0;
   }
+
   bike_speed = 0;
-  
+
+  pinMode(pina_5v, OUTPUT);
+  pinMode(pina_gnd, OUTPUT);
+  pinMode(pina_accel, INPUT);
+
+  digitalWrite(pina_gnd, LOW);
+  digitalWrite(pina_5v, HIGH);
+
+  init_ready = 0;
 }
 
 void loop() {
@@ -56,12 +73,33 @@ void loop() {
           if (dt == 0) bike_speed = 0;
           else bike_speed = wheel_circumference_um_by_4 / dt;
         }
-        
+
         // TODO transmit only the latest value to the RPi
-        Serial.write((char*) &bike_speed, 4);
+        Serial.write((char *)&bike_speed, 4);
+
+        break;
+      }
+
+      case SPEED_REQ_ACCEL: {
+
+        long accel;
+        accel = analogRead(pina_accel);
+        Serial.write((char *)&accel, 4);
+        
+      }
+
+      case SPEED_REQ_INIT_MAGIC: {
+        init_ready = 1;
+        break;
       }
     }
   }
-  
-  
+
+  if (!init_ready) {
+    for (int i = 0; i < 4; i++) {
+      Serial.write(SPEED_REQ_INIT_MAGIC);
+    }
+  }
+
+
 }
