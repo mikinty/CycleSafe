@@ -12,6 +12,7 @@
 #define ULTSND_MIN_DIST_UM 50000
 #define LIDAR_MIN_DIST_CM 50
 #define LIDAR_MAX_DIST_CM 2500
+#define LIDAR_MIN_VEL_DT_US 20000
 
 // Fixed values
 

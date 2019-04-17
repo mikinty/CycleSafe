@@ -61,6 +61,7 @@
 typedef struct __lidar_dev_t {
   int i2cHandle;
   uint16_t unitId;
+  uint8_t is_hp;
 
   uint16_t dist; // cm
   uint16_t qDist[LIDAR_QLEN];
@@ -68,13 +69,16 @@ typedef struct __lidar_dev_t {
   int32_t qVel[LIDAR_QLEN];
   uint32_t qTick[LIDAR_QLEN];
   uint8_t qIndex;
+  uint8_t qVIndex;  
 } lidar_dev_t;
 
 int lidarIdGet(lidar_dev_t *dev) {
 
   int readVal;
+  
+  unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_UNIT_ID_HIGH;
 
-  readVal = i2cReadWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_UNIT_ID_HIGH);
+  readVal = i2cReadWordData(dev->i2cHandle, reg);
   if (readVal < 0) return readVal;
 
   return __bswap_16(readVal);
@@ -98,10 +102,12 @@ uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev) {
 
 int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
 
-  if (newAddr & 0x1) return -1;
+  if (newAddr & 0x81) return -1;
 
   int status = 0;
-  status = i2cWriteWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_I2C_ID_HIGH, __bswap_16(dev->unitId));
+  
+  unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_I2C_ID_HIGH;
+  status = i2cWriteWordData(dev->i2cHandle, reg, __bswap_16(dev->unitId));
   
   if (status < 0) return status;
 
@@ -143,36 +149,67 @@ int lidarDistRead(lidar_dev_t *dev) {
   } while (status & 1);
 
   int readVal;
-  readVal = i2cReadWordData(dev->i2cHandle, LIDARSP_I2C_REG_BLOCK_MASK | LIDAR_REG_FULL_DELAY_HIGH);
+  
+  unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_FULL_DELAY_HIGH;
+  readVal = i2cReadWordData(dev->i2cHandle, reg);
   if (readVal < 0) return readVal;
 
   return __bswap_16(readVal);
 
 }
 
-void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick, int32_t vel) {
+void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick) {
 
   int i = dev->qIndex;
+  int32_t vel;
+  uint16_t prevDist;
+  uint32_t prevTick;
+  
+  if (dev->qVIndex == i) {
+    // This is the first reading
+    vel = 0;
+  }
+  else {
+  
+    prevDist = dev->qDist[dev->qVIndex];
+    prevTick = dev->qTick[dev->qVIndex];
+
+    // This is in um/ms, or mm/s
+
+    int64_t dx = ((((int64_t) dist) - ((int64_t) prevDist)) * UM_PER_CM * USEC_PER_MSEC);
+    int64_t dt = tick - prevTick;
+    vel = dx / dt;
+    
+  }
+  
+  // printf("i:%d, vi:%d, d:%d, v:%d\n", i, dev->qVIndex, dist, vel);
+  
   dev->qDist[i] = dist;
   dev->qTick[i] = tick;
   dev->qVel[i] = vel;
 
   dev->qIndex = (i + 1) & LIDAR_QLEN_MASK;
 
-  if (dev->qDist[0] == 0) {
+  if (dev->qDist[1] == 0) {
     // First reading
     dev->dist = dist;
   }
   else {
     dev->dist = (7 * dev->dist + dist) / 8;
 
-    if (dev->qDist[1] == 0) {
+    if (dev->qDist[2] == 0) {
       // Second reading
       dev->vel = vel;
     }
     else {
       dev->vel = (7 * dev->vel + vel) / 8;
     }
+    
+    if (dev->qIndex == dev->qVIndex || tick - prevTick > LIDAR_MIN_VEL_DT_US) {
+      // Increment the dx index
+      dev->qVIndex = (dev->qVIndex + 1) & LIDAR_QLEN_MASK;
+    }
+    
   }
 
 }
@@ -182,12 +219,10 @@ int lidarUpdate(lidar_dev_t *dev) {
   int status;
   int readVal;
 
-  uint32_t tick, prevTick; // ppTick;
-  uint16_t dist, prevDist; // ppDist;
-  int32_t vel;
-  int i = dev->qIndex;
+  uint32_t tick; // ppTick;
+  uint16_t dist; // ppDist;
 
-  status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_ACQ_COMMAND, 0x1);
+  status = lidarAcquireStart(dev, 0);
   if (status < 0) {
     return status;
   }
@@ -199,7 +234,8 @@ int lidarUpdate(lidar_dev_t *dev) {
 
   tick = gpioTick();
 
-  readVal = i2cReadWordData(dev->i2cHandle, LIDAR_REG_FULL_DELAY_HIGH);
+  unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_FULL_DELAY_HIGH;
+  readVal = i2cReadWordData(dev->i2cHandle, reg);
   if (readVal < 0) return readVal;
 
   dist = __bswap_16(readVal);
@@ -208,16 +244,7 @@ int lidarUpdate(lidar_dev_t *dev) {
   // Throw out anything too close or too far (20cm - 25m)
   if (dist < LIDAR_MIN_DIST_CM || dist > LIDAR_MAX_DIST_CM) return 1;
 
-  prevDist = dev->qDist[(i - 1) & LIDAR_QLEN_MASK];
-  prevTick = dev->qTick[(i - 1) & LIDAR_QLEN_MASK];
-
-  // This is in um/ms, or mm/s
-  
-  int64_t dx = ((((int64_t) dist) - ((int64_t) prevDist)) * UM_PER_CM * USEC_PER_MSEC);
-  int64_t dt = tick - prevTick;
-  vel = dx / dt;
-
-  lidarDistEnq(dev, dist, tick, vel);
+  lidarDistEnq(dev, dist, tick);
 
   /*
   // Throw out the previous reading if it seems like an anomaly.
@@ -251,10 +278,16 @@ lidar_dev_t *lidarInit(uint16_t id) {
     return NULL;
   }
   dev->unitId = id;
+  
+  if (id == LIDAR_ID_HP) {
+    dev->is_hp = 1;
+  }
+  else dev->is_hp = 0;
 
   int i = 0;
   while (i < LIDAR_QLEN) dev->qDist[i++] = 0;
   dev->qIndex = 0;
+  dev->qVIndex = 0;
 
   return dev;
 

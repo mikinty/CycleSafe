@@ -41,7 +41,7 @@ int init() {
 
   sonarStart();
 
-  frontLidar = lidarInit(LIDAR_ID_SP);
+  frontLidar = lidarInit(LIDAR_ID_HP);
   if (frontLidar == NULL) {
     ERRP("lidarStart() failed.\n");
     sonarStop();
@@ -61,8 +61,8 @@ int init() {
     return status;
   }
   INFOP("LIDAR (front) initialized.\n");
-/*
-  farLidar = lidarInit(LIDAR_ID_HP);
+
+  farLidar = lidarInit(LIDAR_ID_SP);
   if (farLidar == NULL) {
     ERRP("lidarStart() failed.\n");
     lidarClose(frontLidar);
@@ -84,7 +84,7 @@ int init() {
     return status;
   }
   INFOP("LIDAR (far) initialized.\n");
-*/
+
   nearLidar = lidarInit(LIDAR_ID_SPMARK);
   if (nearLidar == NULL) {
     ERRP("lidarStart() failed.\n");
@@ -165,9 +165,10 @@ int main() {
 
     lidarUpdate(frontLidar);
     tti = lidarTimeToImpactGetMs(frontLidar);
+    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
-      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
+      
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
