@@ -125,9 +125,9 @@ int init() {
   INFOP("sonar initialized.\n");
 
   gpioSetMode(5, PI_INPUT);
-  gpioSetPullUpDown(5, PI_PUD_UP); 
+  gpioSetPullUpDown(5, PI_PUD_UP);
   gpioSetMode(6, PI_INPUT);
-  gpioSetPullUpDown(6, PI_PUD_UP); 
+  gpioSetPullUpDown(6, PI_PUD_UP);
 
   return 0;
 
@@ -148,15 +148,16 @@ int main() {
 
   int status;
   status = init();
-  if (status < 0) {  
+  if (status < 0) {
     ERRP("Init failed\n");
     return -1;
   }
   int prevSpeed = 0, speed = 0;
-  
+  int accel = 0;
+
   while (1) {
-    
-    status = speedRequest();
+
+    status = speedRequest(SPEED_REQ_SPEED);
     if (status < 0) {
       printf("speedRequest() error %d\n", status);
     }
@@ -168,17 +169,16 @@ int main() {
     // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
-      
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
     }
-    
+
     lidarUpdate(nearLidar);
     tti = lidarTimeToImpactGetMs(nearLidar);
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(0x1000);
-      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
+      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
     }
     else {
       jacketUnset(0x1000);
@@ -194,7 +194,7 @@ int main() {
         jacketSet(JKP_MASK_PROX_SL);
         jacketSet(JKP_MASK_VIB_L);
         jacketSet(JKP_MASK_VIB_R);
-        
+
         break;
       }
     }
@@ -205,21 +205,30 @@ int main() {
       printf("speedRead() error %d\n", speed);
       speed = 0;
     }
+    status = speedRequest(SPEED_REQ_ACCEL);
+    if (status < 0) {
+      printf("speedRequest() error %d\n", status);
+    }
+    accel = speedRead();
+    if (accel < 0) {
+      printf("speedRead() error %d\n", speed);
+      accel = 0;
+    }
 
     // TODO put back zero speed
-    if (speed == 0 || speed + THRESH_DECCELERATION_BRAKE_MM_PER_SEC_2 < prevSpeed) {
+    if (speed < THRESH_BRAKE_SPEED_MM_PER_SEC || accel > THRESH_BRAKE_DECCELERATION_RAW) {
       jacketSet(JKP_MASK_BRAKE);
     }
     else {
       jacketUnset(JKP_MASK_BRAKE);
     }
     prevSpeed = speed;
-    
+
     if (!gpioRead(5)) jacketSet(JKP_MASK_TURNSIG_L);
     else jacketUnset(JKP_MASK_TURNSIG_L);
     if (!gpioRead(6)) jacketSet(JKP_MASK_TURNSIG_R);
     else jacketUnset(JKP_MASK_TURNSIG_R);
-    
+
     status = jacketUpdate();
     if (status < 0) {
       ERRP("Jacket update failed\n");

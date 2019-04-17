@@ -32,7 +32,7 @@ int speedRead() {
 
 }
 
-int speedRequest() {
+int speedRequest(char c) {
 
   int status;
 
@@ -42,7 +42,6 @@ int speedRequest() {
     return status;
   }*/
 
-  char c = SPEED_REQ_SPEED;
   status = write(speed_fd, &c, 1);
   if (status != 1) {
     ERRP("write() failed %d.\n", errno);
@@ -92,6 +91,30 @@ int speedInit() {
     return status;
   }
 
+  // Try to read the magic chars
+  do {
+    int cnt;
+    char tmp;
+    cnt = ioctl(speed_fd, FIONREAD, &result);
+    status = read(speed_fd, &tmp, sizeof(char));
+    if (tmp == SPEED_REQ_INIT_MAGIC) {
+      break;
+    }
+
+  } while (1);
+
+  status = write(speed_fd, &tmp, sizeof(char));
+  if (status != 1) {
+    ERRP("write() failed %d.\n", errno);
+    return -1;
+  }
+
+  status = tcflush(speed_fd, TCIFLUSH);
+  if (status < 0) {
+    ERRP("tcflush() failed %d.\n", errno);
+    return status;
+  }
+
   return 0;
 
 }
@@ -113,7 +136,7 @@ int speedTest() {
 
   int i;
   for (i = 0; i < 60; i++) {
-    status = speedRequest();
+    status = speedRequest(SPEED_REQ_SPEED);
     if (status < 0) {
       printf("speedRequest() error %d\n", status);
       //speedClose();

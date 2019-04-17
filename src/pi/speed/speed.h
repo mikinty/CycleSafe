@@ -13,7 +13,7 @@
 #include "speed_protocol.h"
 
 int speedRead(); // mm/sec
-int speedRequest();
+int speedRequest(char c);
 int speedInit();
 void speedClose();
 
