@@ -124,10 +124,10 @@ int init() {
   }
   INFOP("sonar initialized.\n");
 
-  gpioSetMode(5, PI_INPUT);
-  gpioSetPullUpDown(5, PI_PUD_UP);
-  gpioSetMode(6, PI_INPUT);
-  gpioSetPullUpDown(6, PI_PUD_UP);
+  gpioSetMode(12, PI_INPUT);
+  gpioSetPullUpDown(12, PI_PUD_UP);
+  gpioSetMode(13, PI_INPUT);
+  gpioSetPullUpDown(13, PI_PUD_UP);
 
   return 0;
 
@@ -169,7 +169,7 @@ int main() {
       ERRP("lidarUpdate(frontLidar) error 0x%x\n", status);
     }
     tti = lidarTimeToImpactGetMs(frontLidar);
-    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti); 
+    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_BUZZ_R);
     }
@@ -220,7 +220,7 @@ int main() {
       ERRP("speedRead() error 0x%x\n", accel);
       accel = 0;
     }
-    
+
     //printf("Speed: %d, Accel: %d\n", speed, accel);
 
     // TODO put back zero speed
@@ -231,9 +231,9 @@ int main() {
       jacketUnset(JKP_MASK_BRAKE);
     }
 
-    if (!gpioRead(5)) jacketSet(JKP_MASK_TURNSIG_L);
+    if (!gpioRead(12)) jacketSet(JKP_MASK_TURNSIG_L);
     else jacketUnset(JKP_MASK_TURNSIG_L);
-    if (!gpioRead(6)) jacketSet(JKP_MASK_TURNSIG_R);
+    if (!gpioRead(13)) jacketSet(JKP_MASK_TURNSIG_R);
     else jacketUnset(JKP_MASK_TURNSIG_R);
 
     status = jacketUpdate();
