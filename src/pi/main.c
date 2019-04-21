@@ -22,6 +22,10 @@ int init() {
   }
   INFOP("pigpio initialized.\n");
 
+  gpioSetMode(PIN_RESET, PI_OUTPUT);
+  gpioWrite(PIN_RESET, PI_OFF);
+  gpioWrite(PIN_RESET, PI_ON);
+
   status = jacketConnect();
   if (status < 0) {
     ERRP("jacketConnect() failed.\n");

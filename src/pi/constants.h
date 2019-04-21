@@ -4,6 +4,18 @@
 
 // Debug
 
+
+// Pins
+
+// 2-3 taken by I2C
+#define PIN_LIDAR_INTR_FRONT 5
+#define PIN_LIDAR_INTR_FAR 6
+#define PIN_LIDAR_INTR_NEAR 7
+#define PIN_RESET 8
+#define PIN_TURNSIG_L 12
+#define PIN_TURNSsIG_R 13
+// 16-27 taken by ultrasound sensors
+
 // Parameters
 
 #define THRESH_FRONT_TTI_MSEC 3000
@@ -42,6 +54,5 @@
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 #define INFOP(...) fprintf(stdout, "%s", __VA_ARGS__);
-
 
 #endif //_CONSTANTS_H_
