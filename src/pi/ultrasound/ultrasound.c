@@ -3,9 +3,9 @@
 
 // PIN NUMBERS
 /** @brief  trigger pin numbers */
-static const int GPIO_TRIG_PIN[ULTSND_SENSOR_COUNT] = {16, 18, 20, 22, 24, 26};
+static const int GPIO_TRIG_PIN[ULTSND_SENSOR_COUNT] = {16, 18, 20, 23, 25, 27};
 /** @brief  echo pin numbers */
-static const int GPIO_ECHO_PIN[ULTSND_SENSOR_COUNT] = {17, 19, 21, 23, 25, 27};
+static const int GPIO_ECHO_PIN[ULTSND_SENSOR_COUNT] = {17, 19, 21, 22, 24, 26};
 
 /* forward prototypes */
 

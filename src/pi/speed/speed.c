@@ -120,6 +120,8 @@ int speedInit() {
     return -1;
   }
   
+  sleep(1);
+  
   // Clear the queue
   do {
     char tmpbuf[16];

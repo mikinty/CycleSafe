@@ -8,17 +8,18 @@
 // Pins
 
 // 2-3 taken by I2C
-#define PIN_LIDAR_INTR_FRONT 5
-#define PIN_LIDAR_INTR_FAR 6
-#define PIN_LIDAR_INTR_NEAR 7
+#define PIN_LIDAR_INTR_FRONT 7
+#define PIN_LIDAR_INTR_FAR 5
+#define PIN_LIDAR_INTR_NEAR 6
 #define PIN_RESET 8
 #define PIN_TURNSIG_L 12
-#define PIN_TURNSsIG_R 13
+#define PIN_TURNSIG_R 13
 // 16-27 taken by ultrasound sensors
 
 // Parameters
 
 #define THRESH_FRONT_TTI_MSEC 3000
+#define THRESH_BACK_TTI_MSEC 3000
 #define THRESH_PROX_UM 300000
 #define THRESH_BRAKE_SPEED_MM_PER_SEC 500
 #define THRESH_BRAKE_DECCELERATION_RAW 340
