@@ -60,6 +60,31 @@ int jacketConnect() {
 #endif
 }
 
+int jacketCycle(int sleepMs) {
+
+  struct timespec ts;
+  ts.tv_sec = 0;
+  ts.tv_nsec = NSEC_PER_MSEC * sleepMs;
+
+  for (i = 0x2; i != JKP_MASK_MAX / sleepSec; i <<= 1) {
+
+    jacketSet(i);
+    status = jacketUpdate();
+    if (status < 0) {
+      printf("jacketUpdate() failed %d\n", status);
+    }
+    nanosleep(&ts, NULL);
+
+    jacketUnset(i);
+    status = jacketUpdate();
+    if (status < 0) {
+      printf("jacketUpdate() failed %d\n", status);
+    }
+
+  }
+
+}
+
 int jacketTest(int sleepSec) {
 
   int status;
@@ -69,7 +94,7 @@ int jacketTest(int sleepSec) {
     return status;
   }
   printf("Connected...\n");
-  
+
   int i;
   for (i = 1; i < 32 / sleepSec; i++) {
 

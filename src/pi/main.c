@@ -13,6 +13,11 @@ lidar_dev_t *nearLidar;
 
 int accel_zero;
 
+int isActiveUltSnd;
+int isActiveSpeed;
+int isActiveJacket;
+int isActivePhone;
+
 int init() {
 
   int status;
@@ -24,117 +29,148 @@ int init() {
   }
   INFOP("pigpio initialized.\n");
 
+  INFOP("Resetting LIDAR...");
   gpioSetMode(PIN_RESET, PI_OUTPUT);
   gpioWrite(PIN_RESET, PI_OFF);
-  gpioSleep(0, 1, 0);
+  gpioSleep(0, 0, 200000);
   gpioWrite(PIN_RESET, PI_ON);
+  INFOP("success.\n");
 
-  status = jacketConnect();
-  if (status < 0) {
+  INFOP("Connecting to jacket...");
+  isActiveJacket = jacketConnect();
+  if (isActiveJacket < 0) {
+    isActiveJacket = 0;
     ERRP("jacketConnect() failed.\n");
-    gpioTerminate();
-    return status;
   }
-  INFOP("Jacket connected.\n");
+  else {
+    INFOP("connected.\n");
+    INFOP("Jacket system check...");
+    jacketCycle(100);
+    INFOP("completed.\n");
+  }
 
-  status = speedInit();
-  if (status < 0) {
+  INFOP("Initializing speedometer...");
+  isActiveSpeed = speedInit();
+  if (isActiveSpeed < 0) {
     ERRP("speedInit() failed.\n");
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
   }
-  INFOP("Speedometer initialized.\n");
+  else {
+    INFOP("success.\n");
+    status = speedRequest(SPEED_REQ_SPEED);
+    if (status < 0) {
+      ERRP("speedRequest(speed) error 0x%x\n", status);
+    }
+    status = speedRequest(SPEED_REQ_ACCEL);
+    if (status < 0) {
+      ERRP("speedRequest(accel) error 0x%x\n", status);
+    }
+    gpioSleep(0, 0, 100000);
+    int speed = speedRead();
+    if (speed < 0) {
+      ERRP("speedRead(speed) error 0x%x\n", speed);
+    }
+    printf("\tSpeed reading: %d\n", speed);
+    int accel = speedRead();
+    if (accel < 0) {
+      ERRP("speedRead(accel) error 0x%x\n", accel);
+    }
+    printf("\tAcceleration reading: %d\n", accel);
+    accel_zero = accel;
+  }
 
-  sonarStart();
-
+  INFOP("Initializing front LIDAR...");
   frontLidar = lidarInit(LIDAR_ID_SP);
   if (frontLidar == NULL) {
     ERRP("lidarStart() failed.\n");
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
   }
-  status = lidarAddressSet(frontLidar, 0x6A);
-  if (status < 0) {
-    ERRP("lidarAddressSet() failed.\n");
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
+  else {
+    status = lidarAddressSet(frontLidar, LIDAR_I2C_ADDR_SP);
+    if (status < 0) {
+      ERRP("lidarAddressSet() failed.\n");
+      lidarClose(frontLidar);
+      frontLidar = NULL;
+    }
+    else {
+      INFOP("success.\n");
+      status = lidarUpdate(frontLidar);
+      if (status < 0) {
+        ERRP("lidarUpdate(frontLidar) error 0x%x\n", status);
+      }
+      else {
+        INFOP("\tReading: %d\n", lidarDistGet(frontLidar));
+      }
+    }
   }
-  INFOP("LIDAR (front) initialized.\n");
 
+  INFOP("Initializing rear far LIDAR...");
   farLidar = lidarInit(LIDAR_ID_HP);
   if (farLidar == NULL) {
     ERRP("lidarStart() failed.\n");
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
   }
-  status = lidarAddressSet(farLidar, 0x6C);
-  if (status < 0) {
-    ERRP("lidarAddressSet() failed.\n");
-    lidarClose(farLidar);
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
+  else {
+    status = lidarAddressSet(farLidar, LIDAR_I2C_ADDR_HP);
+    if (status < 0) {
+      ERRP("lidarAddressSet() failed.\n");
+      lidarClose(farLidar);
+      farLidar = NULL;
+    }
+    else {
+      INFOP("success.\n");
+      status = lidarUpdate(farLidar);
+      if (status < 0) {
+        ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
+      }
+      else {
+        INFOP("\tReading: %d\n", lidarDistGet(farLidar));
+      }
+    }
   }
-  INFOP("LIDAR (far) initialized.\n");
 
+  INFOP("Initializing rear close LIDAR...");
   nearLidar = lidarInit(LIDAR_ID_SPMARK);
   if (nearLidar == NULL) {
     ERRP("lidarStart() failed.\n");
-    lidarClose(farLidar);
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
   }
-  status = lidarAddressSet(nearLidar, 0x6E);
-  if (status < 0) {
-    ERRP("lidarAddressSet() failed.\n");
-    lidarClose(nearLidar);
-    lidarClose(farLidar);
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
-  }
-  INFOP("LIDAR (near) initialized.\n");
+  else {
+    status = lidarAddressSet(nearLidar, LIDAR_I2C_ADDR_SPMARK);
+    if (status < 0) {
+      ERRP("lidarAddressSet() failed.\n");
+      lidarClose(nearLidar);
+      farLidar = NULL;
+    }
+    else {
+      INFOP("success.\n");
+      status = lidarUpdate(nearLidar);
+      if (status < 0) {
+        ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
+      }
+      else {
+        INFOP("\tReading: %d\n", lidarDistGet(nearLidar));
+      }
+    }
 
+  INFOP("Initializing ultrasonic sensors...");
+
+  sonarStart();
   status = sonarPollStart();
   if (status < 0) {
     ERRP("sonarPollStart() failed.\n");
-    lidarClose(nearLidar);
-    lidarClose(farLidar);
-    lidarClose(frontLidar);
-    sonarStop();
-    speedClose();
-    jacketDisconnect();
-    gpioTerminate();
-    return status;
   }
-  INFOP("sonar initialized.\n");
+  else {
+    INFOP("success.\n");
+    int i;
+    for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
+      uint32_t dist = sonarReadUm(i);
+      INFOP("\tSonar %d: Reading: %d\n", i, dist);
+    }
+  }
 
+  INFOP("Initializing turn signals...");
   gpioSetMode(PIN_TURNSIG_L, PI_INPUT);
   gpioSetPullUpDown(PIN_TURNSIG_L, PI_PUD_UP);
   gpioSetMode(PIN_TURNSIG_R, PI_INPUT);
   gpioSetPullUpDown(PIN_TURNSIG_R, PI_PUD_UP);
+  INFOP("success.\n");
 
   return 0;
 
@@ -148,6 +184,7 @@ void csClose() {
   sonarStop();
   speedClose();
   jacketDisconnect();
+  gpioWrite(PIN_RESET, PI_OFF);
   gpioTerminate();
 }
 
@@ -161,61 +198,9 @@ int main() {
   }
   int speed = 0;
   int accel = 0;
-  
+
   printf("=== System Test ===\n");
-  printf("LIDAR (front):\n");
-  status = lidarUpdate(frontLidar);
-  if (status < 0) {
-    ERRP("lidarUpdate(frontLidar) error 0x%x\n", status);
-  }
-  printf("Reading: %d\n", lidarDistGet(frontLidar));
-  
-  printf("LIDAR (far back):\n");
-  status = lidarUpdate(farLidar);
-  if (status < 0) {
-    ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
-  }
-  printf("Reading: %d\n", lidarDistGet(farLidar));
-  
-  printf("LIDAR (near back):\n");
-  status = lidarUpdate(nearLidar);
-  if (status < 0) {
-    ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
-  }
-  printf("Reading: %d\n", lidarDistGet(nearLidar));
-  
-  printf("Sonars\n");
-  int i;
-  for (i = 0; i < ULTSND_SENSOR_COUNT; i++) {
-    uint32_t dist = sonarReadUm(i);
-    printf("Sonar %d: Reading: %d\n", i, dist);
-  }
-  
-  status = speedRequest(SPEED_REQ_SPEED);
-  if (status < 0) {
-    ERRP("speedRequest(speed) error 0x%x\n", status);
-  }
-  status = speedRequest(SPEED_REQ_ACCEL);
-  if (status < 0) {
-    ERRP("speedRequest(accel) error 0x%x\n", status);
-  }
 
-  gpioSleep(0, 0, 100000);
-
-  speed = speedRead();
-  if (speed < 0) {
-    ERRP("speedRead(speed) error 0x%x\n", speed);
-    speed = 0; 
-  }
-  printf("Speed reading: %d\n", speed);
-  accel = speedRead();
-  if (accel < 0) {
-    ERRP("speedRead(accel) error 0x%x\n", accel);
-    accel = 0;
-  }
-  printf("Acceleration reading: %d\n", accel);
-  accel_zero = accel;
-  
   while (1) {
 
     status = speedRequest(SPEED_REQ_SPEED);
@@ -254,7 +239,7 @@ int main() {
     else {
       jacketUnset(JKP_MASK_BUZZ_L);
     }
-    
+
     lidarUpdate(farLidar);
     if (status < 0) {
       ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
@@ -285,7 +270,7 @@ int main() {
     else jacketUnset(JKP_MASK_TURNSIG_L);
     if (!gpioRead(PIN_TURNSIG_R)) jacketSet(JKP_MASK_TURNSIG_R);
     else jacketUnset(JKP_MASK_TURNSIG_R);
-    
+
     if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
       jacketUnset(0xFFFFFFFF);
       jacketUpdate();

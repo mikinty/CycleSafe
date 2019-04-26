@@ -25,7 +25,7 @@
 #define THRESH_BRAKE_DECCELERATION_RAW 340
 #define ULTSND_MIN_DIST_UM 50000
 #define LIDAR_MIN_DIST_CM 50
-#define LIDAR_MAX_DIST_CM 2500
+#define LIDAR_MAX_DIST_CM 2700
 #define LIDAR_MIN_VEL_DT_US 20000
 
 // Fixed values
@@ -48,6 +48,10 @@
 #define LIDAR_ID_HP 13113
 #define LIDAR_ID_SPMARK 25736
 #define LIDAR_ID_SP 10384
+
+#define LIDAR_I2C_ADDR_HP 0x6A
+#define LIDAR_I2C_ADDR_SP 0x6C
+#define LIDAR_I2C_ADDR_SPMARK 0x6E
 
 /** @brief  Top-middle USB port */
 #define SPEED_USB_PORT "/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0"

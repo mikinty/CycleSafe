@@ -3,6 +3,7 @@
 #define _JACKET_H_
 
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <bluetooth/bluetooth.h>
@@ -18,5 +19,6 @@ void jacketUnset(uint32_t mask);
 int jacketUpdate();
 void jacketDisconnect();
 int jacketConnect();
+int jacketCycle(int sleepMs);
 
 #endif //_JACKET_H_
