@@ -7,6 +7,18 @@
 #include "ultrasound/ultrasound.h"
 #include "speed/speed.h"
 
+typedef struct blindspot_struct {
+  int dist_far_first;
+  int time_far_first;
+  int dist_far_last;
+  int time_far_last;
+  int vel_far_last;
+  int time_near_first;
+  int dist_near_first;
+  int time_near_last;
+  int dist_near_last;
+} blindspot_t;
+
 lidar_dev_t *frontLidar;
 lidar_dev_t *farLidar;
 lidar_dev_t *nearLidar;
@@ -188,6 +200,37 @@ void csClose() {
   gpioTerminate();
 }
 
+int blindspot_update() {
+
+  uint32_t tti;
+
+  lidarUpdate(nearLidar);
+  if (status < 0) {
+    ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
+  }
+  tti = lidarTimeToImpactGetMs(nearLidar);
+  if (tti < THRESH_FRONT_TTI_MSEC) {
+    jacketSet(JKP_MASK_BUZZ_L);
+    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(nearLidar), lidarDistGet(Lidar), tti);
+  }
+  else {
+    jacketUnset(JKP_MASK_BUZZ_L);
+  }
+
+  lidarUpdate(farLidar);
+  if (status < 0) {
+    ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
+  }
+  tti = lidarTimeToImpactGetMs(farLidar);
+  if (tti < THRESH_FRONT_TTI_MSEC) {
+    jacketSet(JKP_MASK_VIB_R);
+    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
+  }
+  else {
+    jacketUnset(JKP_MASK_VIB_R);
+  }
+}
+
 int main() {
 
   int status;
@@ -226,32 +269,8 @@ int main() {
     else {
       jacketUnset(JKP_MASK_BUZZ_R);
     }
-
-    lidarUpdate(nearLidar);
-    if (status < 0) {
-      ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
-    }
-    tti = lidarTimeToImpactGetMs(nearLidar);
-    if (tti < THRESH_FRONT_TTI_MSEC) {
-      jacketSet(JKP_MASK_BUZZ_L);
-      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(nearLidar), lidarDistGet(Lidar), tti);
-    }
-    else {
-      jacketUnset(JKP_MASK_BUZZ_L);
-    }
-
-    lidarUpdate(farLidar);
-    if (status < 0) {
-      ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
-    }
-    tti = lidarTimeToImpactGetMs(farLidar);
-    if (tti < THRESH_FRONT_TTI_MSEC) {
-      jacketSet(JKP_MASK_VIB_R);
-      // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
-    }
-    else {
-      jacketUnset(JKP_MASK_VIB_R);
-    }
+    
+    blindspot_update();
 
     jacketUnset(JKP_MASK_PROX_SL);
     jacketUnset(JKP_MASK_VIB_L);
