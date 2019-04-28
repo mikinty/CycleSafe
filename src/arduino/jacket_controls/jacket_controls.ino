@@ -10,9 +10,13 @@
 #include <FastLED.h>
 #include "jacket_protocol.h"
 
+#define SLV_L_PIN   10
+#define SLV_R_PIN   9
 #define BUZ_L_PIN   8
 #define BUZ_R_PIN   7
 #define LED_PIN     6
+#define TX_PIN      5
+#define RX_PIN      4
 #define VIB_L_PIN   3
 #define VIB_R_PIN   2
 #define NUM_LEDS    300
@@ -133,6 +137,16 @@ void vib_buzz (long command) {
     digitalWrite(BUZ_R_PIN, HIGH);
   else
     digitalWrite(BUZ_R_PIN, LOW);
+
+  if (JKP_MASK_PROX_SL & command)
+    digitalWrite(SLV_L_PIN, HIGH);
+  else 
+    digitalWrite(SLV_L_PIN, LOW);
+
+  if (JKP_MASK_PROX_SR & command)
+    digitalWrite(SLV_R_PIN, HIGH);
+  else 
+    digitalWrite(SLV_R_PIN, LOW);
 }
 
 /**
@@ -159,7 +173,7 @@ void process_comm(long command) {
   FastLED.show();  
 }
 
-SoftwareSerial S(4, 5);
+SoftwareSerial S(RX_PIN, TX_PIN);
 
 void setup() {
   // Sets the baud for serial data transmission      
@@ -172,6 +186,8 @@ void setup() {
   pinMode(VIB_R_PIN, OUTPUT);
   pinMode(BUZ_L_PIN, OUTPUT);
   pinMode(BUZ_R_PIN, OUTPUT);
+  pinMode(SLV_L_PIN, OUTPUT);
+  pinMode(SLV_R_PIN, OUTPUT);
 
   // LED Setup
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);

@@ -28,8 +28,8 @@ void makePass() {
 }
 
 void setup() {
-  pinMode(pin_input, INPUT);
-  attachInterrupt(digitalPinToInterrupt(pin_input), makePass, RISING);
+  pinMode(pin_input, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(pin_input), makePass, FALLING);
   Serial.begin(SPEED_BAUD_RATE);
   for (int i = 0; i < samples; i++) {
     timings[i] = 0;
@@ -74,6 +74,7 @@ void loop() {
         }
 
         // TODO transmit only the latest value to the RPi
+        // Serial.println(bike_speed);
         Serial.write((char *)&bike_speed, 4);
 
         break;
@@ -83,6 +84,7 @@ void loop() {
 
         long accel;
         accel = analogRead(pina_accel);
+        //Serial.println(accel);
         Serial.write((char *)&accel, 4);
         
       }
