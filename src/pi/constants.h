@@ -21,13 +21,19 @@
 #define THRESH_FRONT_TTI_MSEC 3000
 #define THRESH_BACK_TTI_NOTIF_MSEC 2500
 #define THRESH_BACK_TTI_ALERT_MSEC 1500
-#define THRESH_PROX_UM 300000
+#define THRESH_BACK_FAR_MAX_DIST_CM 2900
+#define THRESH_BACK_NEAR_MAX_DIST_CM 1500
+#define THRESH_PROX_UM 2000000
 #define THRESH_BRAKE_SPEED_MM_PER_SEC 500
 #define THRESH_BRAKE_DECCELERATION_RAW 340
 #define ULTSND_MIN_DIST_UM 50000
-#define LIDAR_MIN_DIST_CM 50
-#define LIDAR_MAX_DIST_CM 2700
+#define LIDAR_MIN_DIST_CM 30
+#define LIDAR_MAX_DIST_CM 3000
 #define LIDAR_MIN_VEL_DT_US 20000
+
+#define TTI_MAGIC_DOUBLE 10.0
+
+#define BS_TIMEOUT 0.5
 
 // Fixed values
 
@@ -59,6 +65,6 @@
 
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
-#define INFOP(...) fprintf(stdout, "%s", __VA_ARGS__);
+#define INFOP(...) fprintf(stdout, __VA_ARGS__);
 
 #endif //_CONSTANTS_H_

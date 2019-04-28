@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#include <pigpio.h>
 
 #include "../constants.h"
 #include "jacket_protocol.h"

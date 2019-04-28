@@ -61,6 +61,8 @@
 #define LIDAR_QLEN 16
 #define LIDAR_QLEN_MASK 0xF
 
+#define LIDAR_TIMEOUT_USEC 100000
+
 typedef struct __lidar_dev_t {
   int i2cHandle;
   uint16_t unitId;
@@ -89,10 +91,20 @@ int lidarIdGet(lidar_dev_t *dev) {
 }
 
 uint16_t lidarDistGet(lidar_dev_t *dev) {
+  int currTick = gpioTick();
+  int i = (dev->qIndex - 1) & LIDAR_QLEN_MASK;
+  if (currTick - dev->qTick[i] > LIDAR_TIMEOUT_USEC) {
+    return LIDAR_MAX_DIST_CM;
+  }
   return dev->dist;
 }
 
 int32_t lidarVelGet(lidar_dev_t *dev) {
+  int currTick = gpioTick();
+  int i = (dev->qIndex - 1) & LIDAR_QLEN_MASK;
+  if (currTick - dev->qTick[i] > LIDAR_TIMEOUT_USEC) {
+    return 0;
+  }
   return dev->vel;
 }
 
@@ -116,7 +128,7 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
     return status;
   }
 
-  printf("Addr set: 0x%x\n", newAddr);
+  // printf("Addr set: 0x%x\n", newAddr);
 
   status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, dev->is_hp ? (newAddr << 1) : newAddr);
   if (status < 0) {
@@ -219,14 +231,14 @@ void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick) {
     dev->dist = dist;
   }
   else {
-    dev->dist = (7 * dev->dist + dist) / 8;
+    dev->dist = (3 * dev->dist + dist) / 4;
 
     if (dev->qDist[2] == 0) {
       // Second reading
       dev->vel = vel;
     }
     else {
-      dev->vel = (7 * dev->vel + vel) / 8;
+      dev->vel = (3 * dev->vel + vel) / 4;
     }
     
     if (dev->qIndex == dev->qVIndex || tick - prevTick > LIDAR_MIN_VEL_DT_US) {
@@ -341,6 +353,13 @@ int lidarTest(int reps, int delayUs, uint16_t id) {
 
   readVal = lidarIdGet(dev);
   if (readVal >= 0) printf("LIDAR ID: %d\n", readVal);
+  
+
+  status = lidarAddressSet(dev, 0x42);
+  if (status < 0) {
+    printf("lidarAddrSet() error\n");
+    return -1;
+  }
 
   int i;
   for (i = 0; i < reps; i++) {
@@ -407,8 +426,6 @@ int lidarTestAddrSet(int devID) {
 
 }
 
-
-
 #ifndef FULL_BUILD
 int main() {
 
@@ -417,6 +434,12 @@ int main() {
     printf("gpioInitialise() error %d\n", status);
     return status;
   }
+
+  printf("Resetting LIDAR...");
+  gpioSetMode(PIN_RESET, PI_OUTPUT);
+  gpioWrite(PIN_RESET, PI_OFF);
+  gpioSleep(0, 0, 200000);
+  gpioWrite(PIN_RESET, PI_ON);
 
   uint16_t id;
 
@@ -428,7 +451,7 @@ int main() {
 
 #ifdef TEST_ADDR
   status = lidarTestAddrSet(id);
-  if (status == 0) printf("Success!\n");
+  if (status == 0) printf("Succes   s!\n");
 #else
   status = lidarTest(50, 500000, id);
 #endif
