@@ -2,6 +2,8 @@
 #ifndef _JACKET_PROTOCOL_H_
 #define _JACKET_PROTOCOL_H_
 
+#define JKP_MAGIC 0x76543210
+
 #define JKP_MASK_CONTROL 0x1
 #define JKP_MASK_BRAKE 0x2
 #define JKP_MASK_TURNSIG_L 0x4
