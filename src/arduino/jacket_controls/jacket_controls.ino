@@ -31,7 +31,7 @@
 #define HEIGHT 16
 #define WIDTH  16
 
-#define COMM_LENGTH 4
+#define COMM_LENGTH 8
 
 /*
  * TODO: do we want to do the snake direction change here? or in the code
@@ -196,14 +196,26 @@ void setup() {
   screen_on = false;
 }
 
+// Clear the buffer because of sync issues
+void clear_buffer () {
+  while (S.available() > 0) {
+    S.read();
+  }
+}
+
 void loop() {  
-  long COMMANDS;
+  long COMMANDS, MAGIC;
+  char* read_magic = (char*)&MAGIC;
   char* read_into = (char*)&COMMANDS;
 
-  if(S.available() >= COMM_LENGTH) {
-    S.readBytes(read_into, COMM_LENGTH);
-    Serial.println(COMMANDS);
-
+  if (S.available() >= COMM_LENGTH) {
+    S.readBytes(read_magic, COMM_LENGTH/2);
+    if (MAGIC != JKP_MAGIC) {
+      clear_buffer();
+      return;
+    }
+    
+    S.readBytes(read_into, COMM_LENGTH/2);
     process_comm(COMMANDS);
   }
 }

@@ -1,5 +1,8 @@
+
 #ifndef _JACKET_PROTOCOL_H_
 #define _JACKET_PROTOCOL_H_
+
+#define JKP_MAGIC 0x76543210
 
 #define JKP_MASK_CONTROL 0x1
 #define JKP_MASK_BRAKE 0x2
@@ -13,5 +16,6 @@
 #define JKP_MASK_BUZZ_R 0x200
 #define JKP_MASK_VIB_L 0x400
 #define JKP_MASK_VIB_R 0x800
+#define JKP_MASK_MAX 0x1000
 
 #endif //_JACKET_PROTOCOL_H_
