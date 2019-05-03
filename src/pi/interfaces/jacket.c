@@ -104,9 +104,9 @@ int jacketUpdate() {
 
   if (prev_jacket_state != jacket_state || last_update_time + JACKET_UPDATE_PERIOD_MIN_SEC < time_time()) {
     prev_jacket_state = jacket_state;
-    printf("Send: 0x%x\n", jacket_state);
+    DBGP("Send: 0x%x\n", jacket_state);
     last_update_time = time_time();
-#ifdef DEBUG_NO_CONNECT
+#ifdef NOJACKET
     return 0;
 #else
     status += write(jacket_fd, &magic, sizeof(uint32_t));
@@ -123,7 +123,7 @@ void jacketDisconnect() {
 }
 
 int jacketConnect() {
-#ifdef DEBUG_NO_CONNECT
+#ifdef NOJACKET
   return 0;
 #else
   struct sockaddr_rc addr;
@@ -161,14 +161,14 @@ int jacketCycle(int sleepMs) {
     jacketSet(i);
     status = jacketUpdate();
     if (status < 0) {
-      printf("jacketUpdate() failed %d\n", status);
+      ERRP("jacketUpdate() failed %d\n", status);
     }
     nanosleep(&ts, NULL);
 
     jacketUnset(i);
     status = jacketUpdate();
     if (status < 0) {
-      printf("jacketUpdate() failed %d\n", status);
+      ERRP("jacketUpdate() failed %d\n", status);
     }
 
   }

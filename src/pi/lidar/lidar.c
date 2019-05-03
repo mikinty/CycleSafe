@@ -74,13 +74,13 @@ typedef struct __lidar_dev_t {
   int32_t qVel[LIDAR_QLEN];
   uint32_t qTick[LIDAR_QLEN];
   uint8_t qIndex;
-  uint8_t qVIndex;  
+  uint8_t qVIndex;
 } lidar_dev_t;
 
 int lidarIdGet(lidar_dev_t *dev) {
 
   int readVal;
-  
+
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_UNIT_ID_HIGH;
 
   readVal = i2cReadWordData(dev->i2cHandle, reg);
@@ -120,7 +120,7 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
   if (newAddr & 0x81) return -1;
 
   int status = 0;
-  
+
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_I2C_ID_HIGH;
   status = i2cWriteWordData(dev->i2cHandle, reg, __bswap_16(dev->unitId));
   if (status < 0) {
@@ -128,14 +128,14 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
     return status;
   }
 
-  // printf("Addr set: 0x%x\n", newAddr);
+  // DBGP("Addr set: 0x%x\n", newAddr);
 
   status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_SEC_ADDR, dev->is_hp ? (newAddr << 1) : newAddr);
   if (status < 0) {
     ERRP("i2cWriteByteData() failed 0x%x.\n", status);
     return status;
   }
-  
+
   status = i2cWriteByteData(dev->i2cHandle, LIDAR_REG_I2C_CONFIG, dev->is_hp ? LIDARHP_MASK_I2C_CONFIG_CHANGE_ADDR : 0x0);
   if (status < 0) {
     ERRP("i2cWriteByteData() failed 0x%x.\n", status);
@@ -150,12 +150,12 @@ int lidarAddressSet(lidar_dev_t *dev, uint8_t newAddr) {
     ERRP("i2cOpen() failed 0x%x.\n", status);
     return device;
   }
-  
+
   dev->i2cHandle = device;
-  
+
   status = i2cWriteByteData(
     dev->i2cHandle,
-    LIDAR_REG_I2C_CONFIG, 
+    LIDAR_REG_I2C_CONFIG,
     (dev->is_hp ? LIDARHP_MASK_I2C_CONFIG_CHANGE_ADDR : 0x0) | LIDAR_MASK_I2C_CONFIG_DISABLE_DEFAULT
   );
   if (status < 0) {
@@ -185,7 +185,7 @@ int lidarDistRead(lidar_dev_t *dev) {
   } while (status & 1);
 
   int readVal;
-  
+
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_FULL_DELAY_HIGH;
   readVal = i2cReadWordData(dev->i2cHandle, reg);
   if (readVal < 0) return readVal;
@@ -200,13 +200,13 @@ void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick) {
   int32_t vel;
   uint16_t prevDist;
   uint32_t prevTick;
-  
+
   if (dev->qVIndex == i) {
     // This is the first reading
     vel = 0;
   }
   else {
-  
+
     prevDist = dev->qDist[dev->qVIndex];
     prevTick = dev->qTick[dev->qVIndex];
 
@@ -215,11 +215,11 @@ void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick) {
     int64_t dx = ((((int64_t) dist) - ((int64_t) prevDist)) * UM_PER_CM * USEC_PER_MSEC);
     int64_t dt = tick - prevTick;
     vel = dx / dt;
-    
+
   }
-  
-  // printf("i:%d, vi:%d, d:%d, v:%d\n", i, dev->qVIndex, dist, vel);
-  
+
+  // DBGP("i:%d, vi:%d, d:%d, v:%d\n", i, dev->qVIndex, dist, vel);
+
   dev->qDist[i] = dist;
   dev->qTick[i] = tick;
   dev->qVel[i] = vel;
@@ -240,12 +240,12 @@ void lidarDistEnq(lidar_dev_t *dev, uint16_t dist, uint32_t tick) {
     else {
       dev->vel = (3 * dev->vel + vel) / 4;
     }
-    
+
     if (dev->qIndex == dev->qVIndex || tick - prevTick > LIDAR_MIN_VEL_DT_US) {
       // Increment the dx index
       dev->qVIndex = (dev->qVIndex + 1) & LIDAR_QLEN_MASK;
     }
-    
+
   }
 
 }
@@ -276,14 +276,13 @@ int lidarUpdate(lidar_dev_t *dev) {
 
   unsigned reg = (dev->is_hp ? 0 : LIDARSP_I2C_REG_BLOCK_MASK) | LIDAR_REG_FULL_DELAY_HIGH;
   readVal = i2cReadWordData(dev->i2cHandle, reg);
-    
+
   if (readVal < 0) {
     ERRP("i2cReadWordData() failed 0x%x.\n", status);
     return readVal;
   }
-  
+
   dist = __bswap_16(readVal);
-  //printf("%d\n", dist);
 
   // Try to filter out bad readings.
   // Throw out anything too close or too far (20cm - 25m)
@@ -323,7 +322,7 @@ lidar_dev_t *lidarInit(uint16_t id) {
     return NULL;
   }
   dev->unitId = id;
-  
+
   if (id == LIDAR_ID_HP) {
     dev->is_hp = 1;
   }
@@ -353,7 +352,7 @@ int lidarTest(int reps, int delayUs, uint16_t id) {
 
   readVal = lidarIdGet(dev);
   if (readVal >= 0) printf("LIDAR ID: %d\n", readVal);
-  
+
 
   status = lidarAddressSet(dev, 0x42);
   if (status < 0) {
@@ -411,15 +410,15 @@ int lidarTestAddrSet(int devID) {
     printf("lidarAddrSet() error\n");
     return -1;
   }
-  
+
   printf("Address changed.\n");
-  
+
   readVal = lidarIdGet(dev);
   if (readVal != devID) {
     printf("Incorrect LIDAR ID: Got %d\n", readVal);
     return -1;
   }
-    
+
   lidarClose(dev);
 
   return 0;

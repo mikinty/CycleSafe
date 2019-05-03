@@ -92,18 +92,18 @@ int speedInit() {
   }
 
   // Try to read the magic chars
-  
+
   char tmp;
   do {
     int cnt;
     status = ioctl(speed_fd, FIONREAD, &cnt);
-    
+
     if (status < 0) {
       ERRP("ioctl() failed %d.\n", errno);
       return status;
     }
     status = read(speed_fd, &tmp, sizeof(char));
-    
+
     if (status < 0) {
       ERRP("read() failed %d.\n", errno);
       return status;
@@ -119,9 +119,9 @@ int speedInit() {
     ERRP("write() failed %d.\n", errno);
     return -1;
   }
-  
+
   sleep(1);
-  
+
   // Clear the queue
   do {
     char tmpbuf[16];

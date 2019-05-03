@@ -2,9 +2,6 @@
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
-// Debug
-
-
 // Pins
 
 // 2-3 taken by I2C
@@ -24,7 +21,7 @@
 #define THRESH_BACK_FAR_MAX_DIST_CM 2500
 #define THRESH_BACK_NEAR_MAX_DIST_CM 1300
 #ifdef TRAINER
-  #define THRESH_PROX_UM 300000
+  #define THRESH_PROX_UM 500000
 #else
   #define THRESH_PROX_UM 2000000
 #endif
@@ -35,9 +32,8 @@
 #define LIDAR_MAX_DIST_CM 3000
 #define LIDAR_MIN_VEL_DT_US 20000
 
-#define TTI_MAGIC_DOUBLE 10.0
+#define BS_FIRST_STEP_SEC 0.05
 
-#define BS_FIRST_STEP_SEC 0.05 //
 #define BR_PERSIST_SEC 0.5
 
 #define BLINKER_SLOW_ON_MSEC 700
@@ -47,6 +43,7 @@
 #define BLINKER_FAST_T_MSEC 400
 
 #define JACKET_UPDATE_PERIOD_MIN_SEC 1.0
+#define SYSTEM_UPDATE_PERIOD_MIN_USEC 8000
 
 // Fixed values
 
@@ -76,8 +73,13 @@
 /** @brief  Top-middle USB port */
 #define SPEED_USB_PORT "/dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0"
 
+
+// Printers
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 #define INFOP(...) fprintf(stdout, __VA_ARGS__);
+#define UIP(...) printf(__VA_ARGS__);
+#define DBGP(...) fprintf(stderr, "%s:%d: ", __FILE__, __LINE__);\
+  fprintf(stderr, __VA_ARGS__);
 
 #endif //_CONSTANTS_H_

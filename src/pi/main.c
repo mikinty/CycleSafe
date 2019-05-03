@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "interfaces/jacket.h"
+#include "interfaces/phone.h"
 #include "lidar/lidar.h"
 #include "ultrasound/ultrasound.h"
 #include "speed/speed.h"
@@ -89,16 +90,16 @@ int init() {
     if (speed < 0) {
       ERRP("speedRead(speed) error 0x%x\n", speed);
     }
-    printf("\tSpeed reading: %d\n", speed);
+    INFOP("\tSpeed reading: %d\n", speed);
 #ifndef TRAINER
     int accel = speedRead();
     if (accel < 0) {
       ERRP("speedRead(accel) error 0x%x\n", accel);
     }
-    printf("\tAcceleration reading: %d\n", accel);
+    INFOP("\tAcceleration reading: %d\n", accel);
     brakes.accel_zero = accel;
 #else
-    printf("\tTrainer mode on! Accelerometer disabled.\n");
+    INFOP("\tTrainer mode on! Accelerometer disabled.\n");
     brakes.prev_speed = speed;
     brakes.prev_time = time_time();
 #endif
@@ -295,15 +296,18 @@ int blindSpotUpdate(int proxFlag) {
 
   if (proxFlag) {
     // blindspotClear();
-    jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_VIB_R);
+    jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L);
+    UIP("Blind spot proximity alert!\n");
   }
   else if (bs.alert_expire > time_curr) {
     jacketSet(JKP_MASK_BUZZ_L);
     jacketSet(JKP_MASK_PROX_SL);
+    UIP("Blind spot alert!\n");
   }
   else if (bs.notif.expire > time_curr) {
     jacketSet(JKP_MASK_VIB_L);
     jacketSet(JKP_MASK_PROX_SL);
+    UIP("Blind spot notification.\n");
   }
 
   return status;
@@ -328,6 +332,7 @@ int brakingUpdate(int speed, int accel) {
 
   if (time_curr - brakes.time_on < BR_PERSIST_SEC) {
     jacketSet(JKP_MASK_BRAKE);
+    UIP("Braking active.\n");
   }
   else {
     jacketUnset(JKP_MASK_BRAKE);
@@ -366,11 +371,12 @@ int main() {
     }
     tti = lidarTimeToImpactGetMs(frontLidar);
     lidarDistGet(frontLidar);
-    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
+    // DBGP("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
 #ifdef TRAINER
     if (tti < THRESH_FRONT_TTI_MSEC) {
       jacketSet(JKP_MASK_BUZZ_R);
       // jacketSet(JKP_MASK_PROX_SR);
+      UIP("Collision alert!\n");
     }
     else {
       jacketUnset(JKP_MASK_BUZZ_R);
@@ -388,6 +394,7 @@ int main() {
       // unwieghted threshold tti.
         jacketSet(JKP_MASK_BUZZ_R);
         // jacketSet(JKP_MASK_PROX_SR);
+        UIP("Collision alert!\n");
       }
     }
 #endif
@@ -399,8 +406,9 @@ int main() {
       if (i == 1 || i == 2) continue;
       uint32_t dist = sonarReadUm(i);
       if (dist > ULTSND_MIN_DIST_UM && dist < THRESH_PROX_UM) {
-        INFOP("Sonar %d, %d\n", i, dist);
+        // DBGP("Sonar %d, %d\n", i, dist);
         jacketSet(JKP_MASK_PROX_SL);
+        UIP("Proximity sensors active.\n");
         proxFlag = 1;
         break;
       }
@@ -408,16 +416,27 @@ int main() {
 
     blindspotUpdate(proxFlag);
 
-    if (!gpioRead(PIN_TURNSIG_L)) blinkerStart(JKP_MASK_TURNSIG_L, 1);
-    else blinkerStop(JKP_MASK_TURNSIG_L);
-    if (!gpioRead(PIN_TURNSIG_R)) blinkerStart(JKP_MASK_TURNSIG_R);
-    else blinkerStop(JKP_MASK_TURNSIG_R);
+    if (!gpioRead(PIN_TURNSIG_L)) {
+      if (blinkerStart(JKP_MASK_TURNSIG_L, 1) == 0) UIP("Left turn signal active.\n");
+    }
+    else {
+      if (blinkerStop(JKP_MASK_TURNSIG_L) == 0) UIP("Left turn signal off.\n");
+    }
+
+    if (!gpioRead(PIN_TURNSIG_R)) {
+      if (blinkerStart(JKP_MASK_TURNSIG_R) == 0) UIP("Right turn signal active.\n");
+    }
+    else {
+      if (blinkerStop(JKP_MASK_TURNSIG_R) == 0) UIP("Right turn signal off.\n");
+    }
 
     if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
+      UIP("Temporary pause.\n");
       jacketUnset(0xFFFFFFFF);
       jacketUpdate();
       gpioSleep(0, 5, 0);
       if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
+        UIP("Shutting down...\n");
         csClose();
         return 0;
       }
@@ -435,7 +454,7 @@ int main() {
       accel = 0;
     }
 
-    //printf("Speed: %d, Accel: %d\n", speed, accel);
+    // DBGP("Speed: %d, Accel: %d\n", speed, accel);
 
     brakingUpdate(speed, accel);
 
@@ -443,7 +462,7 @@ int main() {
     if (status < 0) {
       ERRP("Jacket update failed\n");
     }
-    gpioSleep(0, 0, 10000);
+    gpioSleep(0, 0, SYSTEM_UPDATE_PERIOD_MIN_USEC);
 
   }
 
