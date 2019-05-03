@@ -15,6 +15,19 @@
 
 #define JACKET_BT_ADDR "98:D3:61:FD:51:31"
 
+typedef struct blinker_struct {
+  int mask;
+  double t_on;
+  double t_off;
+  int slow;
+  struct blinker_struct *next;
+} blinker_t;
+
+int blinkerStart(uint32_t mask, int slow);
+int blinkerStop(uint32_t mask);
+void blinkerUpdate();
+void blinkerStopAll();
+
 void jacketSet(uint32_t mask);
 void jacketUnset(uint32_t mask);
 int jacketUpdate();

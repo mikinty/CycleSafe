@@ -16,6 +16,7 @@
 #define JKP_MASK_BUZZ_R 0x200
 #define JKP_MASK_VIB_L 0x400
 #define JKP_MASK_VIB_R 0x800
+#define JKP_MASK_AMBIENT 0x1000
 #define JKP_MASK_MAX 0x1000
 
 #endif //_JACKET_PROTOCOL_H_

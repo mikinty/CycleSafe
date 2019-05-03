@@ -7,22 +7,6 @@
 #include "ultrasound/ultrasound.h"
 #include "speed/speed.h"
 
-/*
-typedef struct blindspot_struct {
-  double time_far_first;
-  uint16_t dist_far_first;
-  int vel_far_max;
-  double tti_far;
-  double time_near_expect;
-  double time_near_first;
-  uint16_t dist_near_first;
-  int vel_near_max;
-  double tti_near;
-} blindspot_t;
-
-blindspot_t bs;
-*/
-
 typedef struct blindspot_struct {
   double time_tti_near_notif;
   double time_tti_far_notif;
@@ -32,6 +16,7 @@ typedef struct blindspot_struct {
   double alert_expire;
 } blindspot_t;
 
+blindspot_t bs;
 
 typedef struct braking_struct {
   double time_on;
@@ -76,10 +61,10 @@ int init() {
     ERRP("jacketConnect() failed %d.\n", isActiveJacket);
     gpioSleep(0, 2, 0);
   } while (isActiveJacket < 0);
-  
+
   INFOP("connected.\n");
   INFOP("Jacket system check...");
-  jacketCycle(250);
+  jacketCycle(400);
   INFOP("completed.\n");
 
   INFOP("Initializing speedometer...");
@@ -221,17 +206,7 @@ int init() {
   return 0;
 
 }
-/*
-void blindspotOldClear() {
-  bs.time_far_first = 0.0;
-  bs.dist_far_first = THRESH_BACK_FAR_MAX_DIST_CM;
-  bs.tti_far = TTI_MAGIC_DOUBLE;
-  bs.time_near_expect = 0.0;
-  bs.time_near_first = 0.0;
-  bs.dist_near_first = THRESH_BACK_NEAR_MAX_DIST_CM;
-  bs.tti_near = TTI_MAGIC_DOUBLE;
-}
-*/
+
 void blindspotClear() {
   bs.alert_expire = 0.0;
   bs.notif_expire = 0.0;
@@ -248,158 +223,28 @@ void csClose() {
   gpioWrite(PIN_RESET, PI_OFF);
   gpioTerminate();
 }
-/*
-int blindspotUpdateOld(int proxFlag) {
 
-  double tti = TTI_MAGIC_DOUBLE;
-  uint16_t dist_near, dist_far;
-  int32_t vel_near, vel_far;
-  int status;
-
-  status = lidarUpdate(nearLidar);
-  if (status < 0) {
-    ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
-  }
-
-  status = lidarUpdate(farLidar);
-  if (status < 0) {
-    ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
-  }
-  
-  dist_near = lidarDistGet(nearLidar);
-  dist_far = lidarDistGet(farLidar);
-  double curr_time = time_time();
-  
-  if (proxFlag) {
-    blindspotClear();
-    if (gpioRead(PIN_TURNSIG_L)) {
-    // Turn signal not on, return
-  
-      jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_VIB_R);
-      return status;
-    }
-    else {
-      jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_VIB_R);
-      return status;
-    }
-  }
-  
-  if (dist_near <= THRESH_BACK_NEAR_MAX_DIST_CM) {
-      
-    printf("Near dist: %d\n", dist_near);
-    // First time, update first
-    if (bs.time_near_first == 0.0) {
-      bs.dist_near_first = dist_near;
-      bs.time_near_first = curr_time;
-    }
-    // This could technically go into the first as well
-    bs.time_near_expect = 0.0;
-    bs.tti_far = TTI_MAGIC_DOUBLE;
-    
-    vel_near = lidarVelGet(nearLidar);
-    if (vel_near > bs.vel_near_max) {
-      bs.vel_near_max = vel_near;
-      printf("Near vel: %d\n", vel_near);
-    }
-    
-    if (bs.vel_near_max > 0.001) bs.tti_near = bs.time_near_first + (MM_PER_CM * (bs.dist_near_first / bs.vel_near_max));
-    
-  }
-  else {
-    if (bs.time_near_first != 0.0) {
-      //INFOP("Near reset\n");
-    }
-    if (bs.time_near_expect != 0.0) {
-      if (curr_time > bs.time_near_expect) {
-        // The car is slowing down, change the tti
-        double dt = curr_time - bs.time_far_first;
-        if (dt > 0.001) {
-          double vel = (bs.dist_far_first - THRESH_BACK_NEAR_MAX_DIST_CM) / dt;
-          bs.tti_far = THRESH_BACK_NEAR_MAX_DIST_CM / vel;
-        }
-      }
-    }
-    
-  }
-  
-  
-  if (dist_far < THRESH_BACK_FAR_MAX_DIST_CM) {
-  
-      
-    printf("far dist: %d\n", dist_far);
-    if (bs.time_far_first == 0.0) {
-      bs.dist_far_first = dist_far;
-      bs.time_far_first = curr_time;
-    }
-    
-    vel_far = lidarVelGet(farLidar);
-    if (vel_far > bs.vel_far_max) bs.vel_far_max = vel_far;
-  
-  
-    if (bs.vel_far_max > 0.001) {
-      bs.time_near_expect = bs.time_far_first + (MM_PER_CM * (bs.dist_far_first - THRESH_BACK_NEAR_MAX_DIST_CM) / bs.vel_far_max);
-      bs.tti_far = bs.time_far_first + (MM_PER_CM * bs.dist_far_first / bs.vel_far_max);
-    }
-    
-  }
-  
-  else {
-    
-    if (bs.time_far_first != 0.0) {
-      //INFOP("Far reset\n");
-    }
-  }
-  
-  jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_VIB_R);
-  
-  if (gpioRead(PIN_TURNSIG_L)) {
-    // Turn signal not on, return
-    return status;
-  }
-  
-  if (bs.tti_near != TTI_MAGIC_DOUBLE) {
-    tti = bs.tti_near;
-  }
-  else if (bs.tti_far != TTI_MAGIC_DOUBLE) {
-    tti = bs.tti_far;
-  }
-  else tti = TTI_MAGIC_DOUBLE;
-  
-  
-  if (tti * MSEC_PER_SEC < THRESH_BACK_TTI_ALERT_MSEC) {
-    jacketSet(JKP_MASK_BUZZ_L);
-    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(nearLidar), lidarDistGet(Lidar), tti);
-  }
-  if (tti * MSEC_PER_SEC < THRESH_BACK_TTI_NOTIF_MSEC) {
-    jacketSet(JKP_MASK_VIB_L | JKP_MASK_VIB_R);
-    // printf("Vel:%d, Dist:%d, TTI:%d\n", lidarVelGet(frontLidar), lidarDistGet(frontLidar), tti);
-  }
-  
-  return status;
-  
-}
-*/
 int blindSpotUpdate(int proxFlag) {
 
   status = lidarUpdate(farLidar);
   if (status < 0) {
     ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
   }
-  
+
   status = lidarUpdate(nearLidar);
   if (status < 0) {
     ERRP("lidarUpdate(nearLidar) error 0x%x\n", status);
   }
-  
+
   double time_curr = time_time();
-  
+
   int far_tti = lidarTimeToImpactGetMs(farLidar);
   int near_tti = lidarTimeToImpactGetMs(nearLidar);
-  
+
   double time_expire;
-  
+
   int alert = 0, notif = 0;
-    
+
   if (near_tti < THRESH_BACK_TTI_ALERT_MSEC) {
     bs.time_tti_near_alert = time_curr;
     time_expire = ((double) near_tti) / 1000 + time_curr;
@@ -410,7 +255,7 @@ int blindSpotUpdate(int proxFlag) {
     time_expire = ((double) far_tti) / 1000 + time_curr;
     alert = 1;
   }
-  
+
   if (alert) {
     if (bs.alert_expire < time_curr) {
       bs.alert_expire = time_curr + BS_FIRST_STEP_SEC;
@@ -420,7 +265,7 @@ int blindSpotUpdate(int proxFlag) {
       if (bs.alert_expire > time_expire) bs.alert_expire = time_expire;
     }
   }
-  
+
   if (near_tti < THRESH_BACK_TTI_NOTIF_MSEC) {
     bs.time_tti_near_notif = time_curr;
     time_expire = ((double) near_tti) / 1000 + time_curr;
@@ -431,7 +276,7 @@ int blindSpotUpdate(int proxFlag) {
     time_expire = ((double) far_tti) / 1000 + time_curr;
     notif = 1;
   }
-  
+
   if (!alert && notif) {
     if (bs.notif_expire < time_curr) {
       bs.notif_expire = time_curr + BS_FIRST_STEP_SEC;
@@ -441,13 +286,13 @@ int blindSpotUpdate(int proxFlag) {
       if (bs.notif_expire > time_expire) bs.notif_expire = time_expire;
     }
   }
-  
+
   if (gpioRead(PIN_TURNSIG_L)) {
-  // Turn signal not on, return  
+  // Turn signal not on, return
     jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_PROX_SL);
     return status;
   }
-  
+
   if (proxFlag) {
     // blindspotClear();
     jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_VIB_R);
@@ -460,15 +305,15 @@ int blindSpotUpdate(int proxFlag) {
     jacketSet(JKP_MASK_VIB_L);
     jacketSet(JKP_MASK_PROX_SL);
   }
-  
+
   return status;
-  
+
 }
 
 int brakingUpdate(int speed, int accel) {
-  
+
   double time_curr = time_time();
-  
+
 #ifdef TRAINER
   (void) accel;
   int dv = speed - brakes.prev_speed;
@@ -480,7 +325,7 @@ int brakingUpdate(int speed, int accel) {
     brakes.time_on = time_curr;
   }
 #endif
-  
+
   if (time_curr - brakes.time_on < BR_PERSIST_SEC) {
     jacketSet(JKP_MASK_BRAKE);
   }
@@ -493,7 +338,7 @@ int brakingUpdate(int speed, int accel) {
 int main() {
 
   int status;
-  
+
   status = init();
   if (status < 0) {
     ERRP("Init failed\n");
@@ -512,7 +357,7 @@ int main() {
     if (status < 0) {
       ERRP("speedRequest(accel) error 0x%x\n", status);
     }
-    
+
     uint32_t tti;
 
     status = lidarUpdate(frontLidar);
@@ -560,13 +405,13 @@ int main() {
         break;
       }
     }
-    
+
     blindspotUpdate(proxFlag);
 
-    if (!gpioRead(PIN_TURNSIG_L)) jacketSet(JKP_MASK_TURNSIG_L);
-    else jacketUnset(JKP_MASK_TURNSIG_L);
-    if (!gpioRead(PIN_TURNSIG_R)) jacketSet(JKP_MASK_TURNSIG_R);
-    else jacketUnset(JKP_MASK_TURNSIG_R);
+    if (!gpioRead(PIN_TURNSIG_L)) blinkerStart(JKP_MASK_TURNSIG_L, 1);
+    else blinkerStop(JKP_MASK_TURNSIG_L);
+    if (!gpioRead(PIN_TURNSIG_R)) blinkerStart(JKP_MASK_TURNSIG_R);
+    else blinkerStop(JKP_MASK_TURNSIG_R);
 
     if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
       jacketUnset(0xFFFFFFFF);
@@ -591,7 +436,7 @@ int main() {
     }
 
     //printf("Speed: %d, Accel: %d\n", speed, accel);
-    
+
     brakingUpdate(speed, accel);
 
     status = jacketUpdate();

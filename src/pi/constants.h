@@ -37,9 +37,16 @@
 
 #define TTI_MAGIC_DOUBLE 10.0
 
-#define BS_TIMEOUT 0.5
 #define BS_FIRST_STEP_SEC 0.05 //
 #define BR_PERSIST_SEC 0.5
+
+#define BLINKER_SLOW_ON_MSEC 700
+#define BLINKER_SLOW_T_MSEC 1000
+
+#define BLINKER_FAST_ON_MSEC 200
+#define BLINKER_FAST_T_MSEC 400
+
+#define JACKET_UPDATE_PERIOD_MIN_SEC 1.0
 
 // Fixed values
 
