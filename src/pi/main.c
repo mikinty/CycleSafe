@@ -225,8 +225,9 @@ void csClose() {
   gpioTerminate();
 }
 
-int blindSpotUpdate(int proxFlag) {
+int blindspotUpdate(int proxFlag) {
 
+  int status;
   status = lidarUpdate(farLidar);
   if (status < 0) {
     ERRP("lidarUpdate(farLidar) error 0x%x\n", status);
@@ -262,7 +263,7 @@ int blindSpotUpdate(int proxFlag) {
       bs.alert_expire = time_curr + BS_FIRST_STEP_SEC;
     }
     else {
-      bs.alert_expire += bs.alert_expire - time_curr
+      bs.alert_expire += bs.alert_expire - time_curr;
       if (bs.alert_expire > time_expire) bs.alert_expire = time_expire;
     }
   }
@@ -283,7 +284,7 @@ int blindSpotUpdate(int proxFlag) {
       bs.notif_expire = time_curr + BS_FIRST_STEP_SEC;
     }
     else {
-      bs.notif_expire += bs.notif_expire - time_curr
+      bs.notif_expire += bs.notif_expire - time_curr;
       if (bs.notif_expire > time_expire) bs.notif_expire = time_expire;
     }
   }
@@ -295,7 +296,7 @@ int blindSpotUpdate(int proxFlag) {
   }
 
   if (proxFlag) {
-    // blindspotClear();
+    blindspotClear();
     jacketSet(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L);
     UIP("Blind spot proximity alert!\n");
   }
@@ -304,7 +305,7 @@ int blindSpotUpdate(int proxFlag) {
     jacketSet(JKP_MASK_PROX_SL);
     UIP("Blind spot alert!\n");
   }
-  else if (bs.notif.expire > time_curr) {
+  else if (bs.notif_expire > time_curr) {
     jacketSet(JKP_MASK_VIB_L);
     jacketSet(JKP_MASK_PROX_SL);
     UIP("Blind spot notification.\n");
@@ -337,6 +338,7 @@ int brakingUpdate(int speed, int accel) {
   else {
     jacketUnset(JKP_MASK_BRAKE);
   }
+  return 0;
 
 }
 
@@ -424,7 +426,7 @@ int main() {
     }
 
     if (!gpioRead(PIN_TURNSIG_R)) {
-      if (blinkerStart(JKP_MASK_TURNSIG_R) == 0) UIP("Right turn signal active.\n");
+      if (blinkerStart(JKP_MASK_TURNSIG_R, 1) == 0) UIP("Right turn signal active.\n");
     }
     else {
       if (blinkerStop(JKP_MASK_TURNSIG_R) == 0) UIP("Right turn signal off.\n");

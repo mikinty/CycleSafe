@@ -25,12 +25,12 @@ int blinkerStart(uint32_t mask, int slow) {
 
   double time_curr = time_time();
   if (slow) {
-    newB->t_on = time_curr + BLINKER_SLOW_T_MSEC;
-    newB->t_off = time_curr + BLINKER_SLOW_ON_MSEC;
+    newB->t_on = time_curr + BLINKER_SLOW_T_SEC;
+    newB->t_off = time_curr + BLINKER_SLOW_ON_SEC;
   }
   else {
-    newB->t_on = time_curr + BLINKER_FAST_T_MSEC;
-    newB->t_off = time_curr + BLINKER_FAST_ON_MSEC;
+    newB->t_on = time_curr + BLINKER_FAST_T_SEC;
+    newB->t_off = time_curr + BLINKER_FAST_ON_SEC;
   }
   return 0;
 }
@@ -51,6 +51,8 @@ int blinkerStop(uint32_t mask) {
   else prevB->next = currB->next;
   free(currB);
 
+  return 0;
+
 }
 
 void blinkerUpdate() {
@@ -59,13 +61,13 @@ void blinkerUpdate() {
   int time_curr = time_time();
   while (bl != NULL) {
     if (time_curr > bl->t_on) { // could do a while too
-      if (bl->slow) bl->t_on += BLINKER_SLOW_T_MSEC;
-      else bl->t_on += BLINKER_FAST_T_MSEC;
+      if (bl->slow) bl->t_on += BLINKER_SLOW_T_SEC;
+      else bl->t_on += BLINKER_FAST_T_SEC;
     }
 
     if (time_curr > bl->t_off) {  // could do a while too
-      if (bl->slow) bl->t_off += BLINKER_SLOW_T_MSEC;
-      else bl->t_off += BLINKER_FAST_T_MSEC;
+      if (bl->slow) bl->t_off += BLINKER_SLOW_T_SEC;
+      else bl->t_off += BLINKER_FAST_T_SEC;
     }
 
     if (bl->t_on < bl->t_off) {
@@ -166,11 +168,11 @@ int jacketCycle(int sleepMs) {
     nanosleep(&ts, NULL);
 
     jacketUnset(i);
-    status = jacketUpdate();
-    if (status < 0) {
-      ERRP("jacketUpdate() failed %d\n", status);
-    }
 
+  }
+  status = jacketUpdate();
+  if (status < 0) {
+    ERRP("jacketUpdate() failed %d\n", status);
   }
 
   return 0;

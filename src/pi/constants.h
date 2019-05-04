@@ -36,11 +36,11 @@
 
 #define BR_PERSIST_SEC 0.5
 
-#define BLINKER_SLOW_ON_MSEC 700
-#define BLINKER_SLOW_T_MSEC 1000
+#define BLINKER_SLOW_ON_SEC 0.7
+#define BLINKER_SLOW_T_SEC 1.0
 
-#define BLINKER_FAST_ON_MSEC 200
-#define BLINKER_FAST_T_MSEC 400
+#define BLINKER_FAST_ON_SEC 0.2
+#define BLINKER_FAST_T_SEC 0.4
 
 #define JACKET_UPDATE_PERIOD_MIN_SEC 1.0
 #define SYSTEM_UPDATE_PERIOD_MIN_USEC 8000
@@ -78,7 +78,7 @@
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 #define INFOP(...) fprintf(stdout, __VA_ARGS__);
-#define UIP(...) printf(__VA_ARGS__);
+#define UIP(...) printf(__VA_ARGS__); fflush(stdout);
 #define DBGP(...) fprintf(stderr, "%s:%d: ", __FILE__, __LINE__);\
   fprintf(stderr, __VA_ARGS__);
 
