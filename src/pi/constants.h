@@ -75,10 +75,16 @@
 
 
 // Printers
+//#define UI
+#ifdef UI
+#define UIP(...) printf(__VA_ARGS__); fflush(stdout);
+#else
+#define UIP(...)
+#endif
+
 #define ERRP(...) fprintf(stderr, "%s:%d in %s: ", __FILE__, __LINE__, __FUNCTION__);\
   fprintf(stderr, __VA_ARGS__);
 #define INFOP(...) fprintf(stdout, __VA_ARGS__);
-#define UIP(...) printf(__VA_ARGS__); fflush(stdout);
 #define DBGP(...) fprintf(stderr, "%s:%d: ", __FILE__, __LINE__);\
   fprintf(stderr, __VA_ARGS__);
 

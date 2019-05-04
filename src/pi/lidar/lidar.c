@@ -61,7 +61,7 @@
 #define LIDAR_QLEN 16
 #define LIDAR_QLEN_MASK 0xF
 
-#define LIDAR_TIMEOUT_USEC 100000
+#define LIDAR_TIMEOUT_USEC 50000
 
 typedef struct __lidar_dev_t {
   int i2cHandle;
@@ -110,6 +110,11 @@ int32_t lidarVelGet(lidar_dev_t *dev) {
 
 uint32_t lidarTimeToImpactGetMs(lidar_dev_t *dev) {
 
+  int currTick = gpioTick();
+  int i = (dev->qIndex - 1) & LIDAR_QLEN_MASK;
+  if (currTick - dev->qTick[i] > LIDAR_TIMEOUT_USEC) {
+    return -1;
+  }
   if (dev->vel >= 0) return (uint32_t) -1;
   return (dev->dist * MM_PER_CM * MSEC_PER_SEC) / -(dev->vel);
 

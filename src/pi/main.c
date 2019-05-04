@@ -240,8 +240,8 @@ int blindspotUpdate(int proxFlag) {
 
   double time_curr = time_time();
 
-  int far_tti = lidarTimeToImpactGetMs(farLidar);
-  int near_tti = lidarTimeToImpactGetMs(nearLidar);
+  uint32_t far_tti = lidarTimeToImpactGetMs(farLidar);
+  uint32_t near_tti = lidarTimeToImpactGetMs(nearLidar);
 
   double time_expire;
 
@@ -250,17 +250,20 @@ int blindspotUpdate(int proxFlag) {
   if (near_tti < THRESH_BACK_TTI_ALERT_MSEC) {
     bs.time_tti_near_alert = time_curr;
     time_expire = ((double) near_tti) / 1000 + time_curr;
+    printf("t=%.3f Near tti: %u\n", time_curr, near_tti);
     alert = 1;
   }
   else if (far_tti < THRESH_BACK_TTI_ALERT_MSEC) {
     bs.time_tti_far_alert = time_curr;
     time_expire = ((double) far_tti) / 1000 + time_curr;
+    printf("t=%.3f Far tti: %u\n", time_curr, near_tti);
     alert = 1;
   }
 
   if (alert) {
     if (bs.alert_expire < time_curr) {
       bs.alert_expire = time_curr + BS_FIRST_STEP_SEC;
+      printf("t=%.3f: First step\n", time_curr);
     }
     else {
       bs.alert_expire += bs.alert_expire - time_curr;
@@ -291,7 +294,6 @@ int blindspotUpdate(int proxFlag) {
 
   if (gpioRead(PIN_TURNSIG_L)) {
   // Turn signal not on, return
-    jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L | JKP_MASK_PROX_SL);
     return status;
   }
 
@@ -416,6 +418,7 @@ int main() {
       }
     }
 
+    jacketUnset(JKP_MASK_BUZZ_L | JKP_MASK_VIB_L);
     blindspotUpdate(proxFlag);
 
     if (!gpioRead(PIN_TURNSIG_L)) {

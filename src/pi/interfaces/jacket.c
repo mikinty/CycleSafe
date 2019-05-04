@@ -58,7 +58,7 @@ int blinkerStop(uint32_t mask) {
 void blinkerUpdate() {
 
   blinker_t *bl = blink_list;
-  int time_curr = time_time();
+  double time_curr = time_time();
   while (bl != NULL) {
     if (time_curr > bl->t_on) { // could do a while too
       if (bl->slow) bl->t_on += BLINKER_SLOW_T_SEC;
