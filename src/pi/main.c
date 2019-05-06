@@ -327,9 +327,12 @@ int brakingUpdate(int speed, int accel) {
 #ifdef TRAINER
   (void) accel;
   int dv = speed - brakes.prev_speed;
-  double dt = time_curr - brakes.prev_time;
-  double a = ((double)dv) / dt;
-  if (a < -500.0) brakes.time_on = time_curr;
+  // double dt = time_curr - brakes.prev_time;
+  // double a = ((double)dv) / dt;
+  // printf("Speed: %d\n", speed);
+  if (dv < -200) brakes.time_on = time_curr;
+  brakes.prev_speed = speed;
+  brakes.prev_time = time_curr;
 #else
   if (speed < THRESH_BRAKE_SPEED_MM_PER_SEC || accel > brakes.accel_zero + THRESH_BRAKE_DECCELERATION_STEPS) {
     brakes.time_on = time_curr;
@@ -440,6 +443,7 @@ int main() {
 
     if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
       UIP("Temporary pause.\n");
+      jacketUnset(0xFFFFFFFF);
       jacketUpdate();
       gpioSleep(0, 5, 0);
       if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
@@ -448,9 +452,11 @@ int main() {
         return 0;
       }
 
-      if (!isActiveAmbient) {
+      if (isActiveAmbient == 0) {
         jacketSet(JKP_MASK_AMBIENT);
+        isActiveAmbient = 1;
       }
+      else isActiveAmbient = 0;
     }
 
     //while (!speedAvailable());
