@@ -245,7 +245,7 @@ int blindspotUpdate(int proxFlag) {
 
   double time_expire;
 
-  int alert = 0, notif = 0;
+  int alert = 0, notif = 0, f_al = 0;
 
   if (near_tti < THRESH_BACK_TTI_ALERT_MSEC) {
     bs.time_tti_near_alert = time_curr;
@@ -258,11 +258,13 @@ int blindspotUpdate(int proxFlag) {
     time_expire = ((double) far_tti) / 1000 + time_curr;
     printf("t=%.3f Far tti: %u\n", time_curr, near_tti);
     alert = 1;
+    f_al = 1;
   }
 
   if (alert) {
     if (bs.alert_expire < time_curr) {
-      bs.alert_expire = time_curr + BS_FIRST_STEP_SEC;
+      if (f_al) bs.alert_expire = time_curr + BS_FIRST_STEP_FAR_SEC;
+      else bs.alert_expire = time_curr + BS_FIRST_STEP_NEAR_SEC;
       printf("t=%.3f: First step\n", time_curr);
     }
     else {
@@ -284,7 +286,7 @@ int blindspotUpdate(int proxFlag) {
 
   if (!alert && notif) {
     if (bs.notif_expire < time_curr) {
-      bs.notif_expire = time_curr + BS_FIRST_STEP_SEC;
+      bs.notif_expire = time_curr + BS_FIRST_STEP_FAR_SEC;
     }
     else {
       bs.notif_expire += bs.notif_expire - time_curr;
