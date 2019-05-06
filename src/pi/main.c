@@ -56,6 +56,13 @@ int init() {
   gpioWrite(PIN_RESET, PI_ON);
   INFOP("success.\n");
 
+  INFOP("Connecting to phone...");
+  isActivePhone = phoneInit();
+  if (isActivePhone < 0) {
+    ERRP("phoneInit() failed.\n");
+  }
+
+
   INFOP("Connecting to jacket...");
   do {
     isActiveJacket = jacketConnect();
@@ -222,8 +229,15 @@ void csClose() {
   sonarStop();
   speedClose();
   jacketDisconnect();
+  phoneClose();
   gpioWrite(PIN_RESET, PI_OFF);
   gpioTerminate();
+}
+
+int phoneUpdate() {
+
+  char c = phoneRead();
+
 }
 
 int blindspotUpdate(int proxFlag) {

@@ -68,6 +68,15 @@ int phoneInit() {
     listen_fd = -1;
   }
 
+  int flags = fcntl(phone_fd, F_GETFL);
+  if (flags == -1) {
+    ERRP("fcntl() read failed.\n");
+  }
+  status = fcntl(phone_fd, F_SETFL, flags | O_NONBLOCK);
+  if (status < 0) {
+    ERRP("fcntl() write failed.\n");
+  }
+
   return 0;
 }
 
