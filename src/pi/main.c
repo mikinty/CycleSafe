@@ -37,6 +37,7 @@ int isActiveSpeed;
 int isActiveJacket;
 int isActivePhone;
 int isActiveAmbient = 0;
+int isActiveDebugging = 0;
 
 int init() {
 
@@ -237,6 +238,29 @@ void csClose() {
 int phoneUpdate() {
 
   char c = phoneRead();
+  switch (c) {
+    case 111: {
+      isActiveDebugging = !isActiveDebugging
+      if (isActiveDebugging) {
+        jacketUnset(0xFFFFFFFF);
+      }
+      break;
+    }
+    case 120: {
+      jacketUnset(JKP_MASK_TURNSIG_L);
+      break;
+    }
+    case 121: {
+      jacketSet(JKP_MASK_TURNSIG_L);
+      break;
+    }
+  }
+  
+  status = jacketUpdate();
+  if (status < 0) {
+    ERRP("Jacket update failed\n");
+  }
+  return 0;
 
 }
 
@@ -483,9 +507,11 @@ int main() {
 
     brakingUpdate(speed, accel);
 
-    status = jacketUpdate();
-    if (status < 0) {
-      ERRP("Jacket update failed\n");
+    if (!isActiveDebugging) {
+      status = jacketUpdate();
+      if (status < 0) {
+        ERRP("Jacket update failed\n");
+      }
     }
     gpioSleep(0, 0, SYSTEM_UPDATE_PERIOD_MIN_USEC);
 

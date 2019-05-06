@@ -7,6 +7,9 @@
 #include <sys/socket.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
+#include <fcntl.h>
+
+#include "../constants.h"
 
 #define ADP_INTERSECT_APPROACH 221
 
@@ -29,7 +32,6 @@
 #define ADP_SET_BRAKE_OFF_WHEN_STOPPED 241
 
 #define ADP_SYSTEM_TEST 243
-
 
 char phoneRead();
 int phoneInit();

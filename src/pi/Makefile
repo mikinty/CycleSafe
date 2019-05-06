@@ -2,7 +2,7 @@
 CC=gcc
 CFLAGS=-Wall -pthread
 LIBS=-lpigpio -lrt -lbluetooth
-OBJS=ultrasound/ultrasound.o speed/speed.o lidar/lidar.o interfaces/jacket.o interfaces.phone.o
+OBJS=ultrasound/ultrasound.o speed/speed.o lidar/lidar.o interfaces/jacket.o interfaces/phone.o
 
 default: clean all
 
