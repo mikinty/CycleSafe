@@ -36,6 +36,7 @@ int isActiveUltSnd;
 int isActiveSpeed;
 int isActiveJacket;
 int isActivePhone;
+int isActiveAmbient = 0;
 
 int init() {
 
@@ -439,13 +440,16 @@ int main() {
 
     if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
       UIP("Temporary pause.\n");
-      jacketUnset(0xFFFFFFFF);
       jacketUpdate();
       gpioSleep(0, 5, 0);
       if (!gpioRead(PIN_TURNSIG_L) && !gpioRead(PIN_TURNSIG_R)) {
         UIP("Shutting down...\n");
         csClose();
         return 0;
+      }
+
+      if (!isActiveAmbient) {
+        jacketSet(JKP_MASK_AMBIENT);
       }
     }
 
