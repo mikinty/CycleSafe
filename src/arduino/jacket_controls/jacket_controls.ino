@@ -22,7 +22,8 @@
 #define NUM_LEDS    300
 /** @brief number of LEDs that wrap around the turns */
 #define NUM_LEDS_SKIP 3
-#define LED_BRIGHTNESS_BRAKE 30
+#define LED_BRIGHTNESS_AMBIENT 30
+#define LED_BRIGHTNESS_BRAKE   130
 
 #define TURN_R 255
 #define TURN_G 191
@@ -154,6 +155,9 @@ void vib_buzz (long command) {
  */
 void process_comm(long command) {
   clear_screen();
+
+  if (JKP_MASK_AMBIENT & command)
+    on_screen(LED_BRIGHTNESS_AMBIENT, 0, 0);
 
   if (JKP_MASK_BRAKE & command)
     on_screen(LED_BRIGHTNESS_BRAKE, 0, 0);
