@@ -22,7 +22,8 @@
 #define NUM_LEDS    300
 /** @brief number of LEDs that wrap around the turns */
 #define NUM_LEDS_SKIP 3
-#define LED_BRIGHTNESS_BRAKE 30
+#define LED_BRIGHTNESS_AMBIENT 30
+#define LED_BRIGHTNESS_BRAKE   130
 
 #define TURN_R 255
 #define TURN_G 191
@@ -31,7 +32,7 @@
 #define HEIGHT 16
 #define WIDTH  16
 
-#define COMM_LENGTH 4
+#define COMM_LENGTH 8
 
 /*
  * TODO: do we want to do the snake direction change here? or in the code
@@ -155,6 +156,9 @@ void vib_buzz (long command) {
 void process_comm(long command) {
   clear_screen();
 
+  if (JKP_MASK_AMBIENT & command)
+    on_screen(LED_BRIGHTNESS_AMBIENT, 0, 0);
+
   if (JKP_MASK_BRAKE & command)
     on_screen(LED_BRIGHTNESS_BRAKE, 0, 0);
 
@@ -196,14 +200,26 @@ void setup() {
   screen_on = false;
 }
 
+// Clear the buffer because of sync issues
+void clear_buffer () {
+  while (S.available() > 0) {
+    S.read();
+  }
+}
+
 void loop() {  
-  long COMMANDS;
+  long COMMANDS, MAGIC;
+  char* read_magic = (char*)&MAGIC;
   char* read_into = (char*)&COMMANDS;
 
-  if(S.available() >= COMM_LENGTH) {
-    S.readBytes(read_into, COMM_LENGTH);
-    Serial.println(COMMANDS);
-
+  if (S.available() >= COMM_LENGTH) {
+    S.readBytes(read_magic, COMM_LENGTH/2);
+    if (MAGIC != JKP_MAGIC) {
+      clear_buffer();
+      return;
+    }
+    
+    S.readBytes(read_into, COMM_LENGTH/2);
     process_comm(COMMANDS);
   }
 }
