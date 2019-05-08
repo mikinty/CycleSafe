@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!--<TextView-->
+        <!--android:id="@+id/message"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginStart="@dimen/activity_horizontal_margin"-->
+        <!--android:layout_marginLeft="@dimen/activity_horizontal_margin"-->
+        <!--android:layout_marginTop="@dimen/activity_vertical_margin"-->
+        <!--android:text="@string/title_home"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent" />-->
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/navigation"/>
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/navigation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="0dp"
+        android:layout_marginStart="0dp"
+        android:background="?android:attr/windowBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/navigation" />
+
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        tools:context=".MainActivity">
+
+        <android.support.design.widget.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"/>
+        //app:menu="@menu/bottom_navigation"/>
+
+
+        <!--<TextView-->
+            <!--android:id="@+id/latitude"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignParentLeft="true"-->
+            <!--android:layout_alignParentTop="true"-->
+            <!--android:text="Latitude:"-->
+            <!--android:textSize="18sp" />-->
+        <!--<TextView-->
+            <!--android:id="@+id/latitude_textview"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignBaseline="@+id/latitude"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_toRightOf="@+id/latitude"-->
+            <!--android:textSize="16sp" />-->
+        <!--<TextView-->
+            <!--android:id="@+id/longitude"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignParentLeft="true"-->
+            <!--android:layout_alignParentTop="true"-->
+            <!--android:text="Longitude:"-->
+            <!--android:layout_marginTop="24dp"-->
+            <!--android:textSize="18sp" />-->
+        <!--<TextView-->
+            <!--android:id="@+id/longitude_textview"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_alignBaseline="@+id/longitude"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_toRightOf="@+id/longitude"-->
+            <!--android:textSize="16sp"/>-->
+
+
+        <!--<ToggleButton-->
+            <!--android:id="@+id/simpleToggleButton"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="true"-->
+            <!--android:gravity="right|center_vertical"-->
+            <!--android:textOff="Off State"-->
+            <!--android:textOn="On State"-->
+            <!--android:layout_marginLeft="300px"-->
+            <!--android:layout_marginTop="300px"/>-->
+
+        <TextView
+            android:id="@+id/simpleTextView"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="90px"
+            android:layout_marginTop="50px"
+            android:gravity="center_horizontal"
+            android:text="CycleSafe"
+            android:textSize="35sp"
+            android:textStyle="bold|italic" />
+
+        <Switch
+        android:id="@+id/bLights"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+
+        android:gravity="right"
+        android:layout_marginLeft="200px"
+        android:layout_marginTop="750px"
+            android:text="Brake Lights     "
+        android:scaleX="1.7"
+        android:scaleY="1.7"/>
+
+
+
+        <Switch
+        android:id="@+id/sound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+
+        android:gravity="right"
+            android:text="Sound                "
+        android:layout_marginLeft="200px"
+        android:layout_marginTop="1150px"
+        android:scaleX="1.7"
+        android:scaleY="1.7"/>
+
+        <Switch
+        android:id="@+id/haptic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+
+        android:gravity="right"
+            android:text="Haptics             "
+        android:layout_marginLeft="200px"
+        android:layout_marginTop="1550px"
+        android:scaleX="1.7"
+        android:scaleY="1.7"/>
+
+        <!--<Switch-->
+            <!--android:id="@+id/lSignal"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Left Turn Signal"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="430px"-->
+            <!--android:layout_marginTop="600px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/rSignal"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Right Turn Signal"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="850px"-->
+            <!--android:layout_marginTop="600px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/lProx"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Left Prox."-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="0px"-->
+            <!--android:layout_marginTop="700px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/rProx"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Right Prox."-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="430px"-->
+            <!--android:layout_marginTop="700px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/lFProx"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Left F. Prox."-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="850px"-->
+            <!--android:layout_marginTop="700px" />-->
+
+        <!--//-->
+        <!--<Switch-->
+            <!--android:id="@+id/rFProx"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Right F. Prox."-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="0px"-->
+            <!--android:layout_marginTop="800px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/lSound"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Left Buzzer"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="430px"-->
+            <!--android:layout_marginTop="800px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/rSound"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Right Buzzer"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="850px"-->
+            <!--android:layout_marginTop="800px" />-->
+
+        <!--//-->
+        <!--<Switch-->
+            <!--android:id="@+id/lHaptic"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Left Haptic"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="0px"-->
+            <!--android:layout_marginTop="900px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/rHaptic"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Right Haptic"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="430px"-->
+            <!--android:layout_marginTop="900px" />-->
+
+        <!--//TEST-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/brakeTEST"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="Brake OFF stopped"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="850px"-->
+            <!--android:layout_marginTop="1500px" />-->
+
+        <!--<Switch-->
+            <!--android:id="@+id/fullTEST"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:checked="false"-->
+            <!--android:text="System Test"-->
+            <!--android:gravity="right"-->
+            <!--android:layout_marginLeft="850px"-->
+            <!--android:layout_marginTop="1600px" />-->
+
+
+    </RelativeLayout>
+
+</android.support.constraint.ConstraintLayout>
